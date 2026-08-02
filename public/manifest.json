@@ -1,0 +1,17 @@
+{
+  "short_name": "Tracker",
+  "name": "Tracker — 90-Day Transformation",
+  "description": "Daily Routine, Hydration, Nutrition, Learning & Progress Tracker",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512 192x192 64x64 32x32"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "display": "standalone",
+  "orientation": "portrait"
+}

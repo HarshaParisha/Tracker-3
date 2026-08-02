@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Clay Light Mode (100% Untouched & Pristine) */
+    --canvas: #fffaf0;
+    --surface-soft: #faf5e8;
+    --surface-card: #f5f0e0;
+    --surface-dark: #0a1a1a;
+    --hairline: #e5e5e5;
+    --ink: #0a0a0a;
+    --text-body: #3a3a3a;
+    --text-muted: #6a6a6a;
+
+    --brand-pink: #ff4d8b;
+    --brand-teal: #1a3a3a;
+    --brand-lavender: #b8a4ed;
+    --brand-peach: #ffb084;
+    --brand-ochre: #e8b94a;
+    --brand-mint: #a4d4c5;
+    --accent-dark: #0a0a0a;
+  }
+
+  /* Sleek Minimal Dark Mode (Pure Charcoal, Zero Green Tint, Zero Pink Domination) */
+  .dark {
+    --canvas: #09090b;
+    --surface-soft: #121217;
+    --surface-card: #181820;
+    --surface-dark: #09090b;
+    --hairline: #242430;
+    --ink: #f4f4f5;
+    --text-body: #d4d4d8;
+    --text-muted: #a1a1aa;
+
+    --brand-pink: #3b82f6; /* Sleek Electric Blue accent in Dark Mode */
+    --brand-teal: #181820;
+    --brand-lavender: #272732;
+    --brand-peach: #272732;
+    --brand-ochre: #272732;
+    --brand-mint: #272732;
+    --accent-dark: #3b82f6;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+.font-display {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -0.03em;
+}
+
+/* GPU Hardware Acceleration Utilities */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Liquid Smooth View Fade-In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-view-fade {
+  animation: fadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--hairline);
+  border-radius: 9999px;
+}

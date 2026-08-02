@@ -1,0 +1,26 @@
+# Environment Files
+.env
+.env.local
+.env.*
+*.env
+
+# Dependencies
+node_modules
+.pnpm-store
+
+# Production Builds
+dist
+build
+
+# IDE & Editor Files
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS Files
+.DS_Store
+Thumbs.db
