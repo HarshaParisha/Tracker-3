@@ -15,8 +15,10 @@ import {
   PanelLeftClose,
   PanelLeft,
   X,
+  LogOut,
 } from 'lucide-react';
 import { db } from '@/db/database';
+import { authService } from '@/services/authService';
 
 interface SidebarProps {
   activeTab: string;
@@ -48,6 +50,12 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
     { id: 'progress', label: '3-Month Progress', icon: Activity },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  const handleLogout = () => {
+    if (confirm('Lock application and log out?')) {
+      authService.logout();
+    }
+  };
 
   const handleExport = async () => {
     const dailyRecords = await db.dailyRecords.toArray();
@@ -199,6 +207,15 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 <input type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
             </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-2 text-[11px] font-bold text-red-400 hover:bg-red-500/20 hover:text-red-300 transition mt-1"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Lock &amp; Logout</span>
+            </button>
           </div>
         ) : (
           <div className="border-t border-[var(--hairline)] pt-3 flex flex-col items-center gap-2">
@@ -208,6 +225,14 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] text-[var(--text-muted)] hover:text-[var(--ink)] transition"
             >
               <Download className="h-4 w-4" />
+            </button>
+            {/* Collapsed Logout Icon */}
+            <button
+              onClick={handleLogout}
+              title="Lock & Logout"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition"
+            >
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         )}
@@ -295,6 +320,15 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 <input type="file" accept=".json" onChange={handleImport} className="hidden" />
               </label>
             </div>
+
+            {/* Mobile Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-[12px] font-bold text-red-400 hover:bg-red-500/20 hover:text-red-300 transition min-h-[44px]"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Lock &amp; Logout</span>
+            </button>
           </div>
         </div>
       </aside>
