@@ -3,7 +3,7 @@ import { db } from '@/db/database';
 import { Card } from '@/components/common/Card';
 import { getStartDate, setStartDate, getDayNumber, getTodayKey } from '@/utils/constants';
 import { notificationService } from '@/services/notificationService';
-import { Calendar, Volume2, Bell, RefreshCw, CheckCircle2, Trash2 } from 'lucide-react';
+import { Calendar, Volume2, Bell, RefreshCw, CheckCircle2, Trash2, VolumeX, BellOff } from 'lucide-react';
 
 interface SettingsViewProps {
   isDark?: boolean;
@@ -13,6 +13,9 @@ export const SettingsView: React.FC<SettingsViewProps> = () => {
   const [startDateInput, setStartDateInput] = useState(getStartDate());
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [wipeSuccess, setWipeSuccess] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(notificationService.isSoundEnabled());
+  const [notifEnabled, setNotifEnabled] = useState(notificationService.isNotifEnabled());
+
   const currentDayNum = getDayNumber();
 
   const handleSaveStartDate = (e: React.FormEvent) => {
@@ -21,6 +24,32 @@ export const SettingsView: React.FC<SettingsViewProps> = () => {
     setStartDate(startDateInput);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 2500);
+  };
+
+  const handleToggleSound = () => {
+    const nextState = !soundEnabled;
+    notificationService.setSoundEnabled(nextState);
+    setSoundEnabled(nextState);
+    if (nextState) {
+      notificationService.playChime(true); // Test chime when enabling sound
+    }
+  };
+
+  const handleToggleNotif = async () => {
+    const nextState = !notifEnabled;
+    if (nextState) {
+      const granted = await notificationService.requestPermission();
+      if (granted) {
+        notificationService.setNotifEnabled(true);
+        setNotifEnabled(true);
+        notificationService.sendNotification('Reminders Active', 'Scheduled routine & water alerts enabled.');
+      } else {
+        alert('Browser notification permission is required to enable alerts.');
+      }
+    } else {
+      notificationService.setNotifEnabled(false);
+      setNotifEnabled(false);
+    }
   };
 
   const handleRestartTracker = () => {
@@ -55,24 +84,74 @@ export const SettingsView: React.FC<SettingsViewProps> = () => {
     }
   };
 
-  const handleAudioTest = () => {
-    notificationService.playChime();
-  };
-
-  const handleNotifPermission = async () => {
-    const granted = await notificationService.requestPermission();
-    if (granted) {
-      notificationService.sendNotification('Alert Test', 'Notifications & Chime audio are configured properly.');
-    }
-  };
-
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
         <h2 className="font-['Space_Grotesk'] text-3xl font-extrabold tracking-tight text-[var(--ink)]">Tracker Settings</h2>
-        <p className="text-sm font-semibold text-[var(--text-muted)] font-medium">Configure 3-Month Start Date, Routine Alarms & Data Management</p>
+        <p className="text-sm font-semibold text-[var(--text-muted)]">Configure 3-Month Schedule, Notification Preferences & Data Management</p>
       </div>
+
+      {/* Notification & Sound Preferences (Default OFF) */}
+      <Card title="Notification & Sound Preferences" subtitle="Control push reminders and audio chime alerts (Default OFF)" color="cream">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 pt-2">
+          {/* Sound Chime Toggle */}
+          <div className="flex items-center justify-between rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-4">
+            <div>
+              <div className="flex items-center gap-2">
+                {soundEnabled ? (
+                  <Volume2 className="h-4 w-4 text-[#ff4d8b]" />
+                ) : (
+                  <VolumeX className="h-4 w-4 text-[var(--text-muted)]" />
+                )}
+                <span className="font-bold text-xs text-[var(--ink)]">Audio Chime Sound</span>
+              </div>
+              <span className="text-[11px] text-[var(--text-muted)] block mt-0.5">
+                {soundEnabled ? 'Chimes active on reminder' : 'Muted (Default OFF)'}
+              </span>
+            </div>
+
+            <button
+              onClick={handleToggleSound}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition shadow-sm min-h-[40px] ${
+                soundEnabled
+                  ? 'bg-[#ff4d8b] text-white hover:opacity-90'
+                  : 'border border-[var(--hairline)] bg-[var(--surface-soft)] text-[var(--ink)] hover:bg-[var(--surface-card)]'
+              }`}
+            >
+              <span>{soundEnabled ? 'ON ✓' : 'OFF'}</span>
+            </button>
+          </div>
+
+          {/* Push Notifications Toggle */}
+          <div className="flex items-center justify-between rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-4">
+            <div>
+              <div className="flex items-center gap-2">
+                {notifEnabled ? (
+                  <Bell className="h-4 w-4 text-[#ff4d8b]" />
+                ) : (
+                  <BellOff className="h-4 w-4 text-[var(--text-muted)]" />
+                )}
+                <span className="font-bold text-xs text-[var(--ink)]">Push Notifications</span>
+              </div>
+              <span className="text-[11px] text-[var(--text-muted)] block mt-0.5">
+                {notifEnabled ? 'Routine & water alerts ON' : 'Disabled (Default OFF)'}
+              </span>
+            </div>
+
+            <button
+              onClick={handleToggleNotif}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition shadow-sm min-h-[40px] ${
+                notifEnabled
+                  ? 'bg-[#ff4d8b] text-white hover:opacity-90'
+                  : 'border border-[var(--hairline)] bg-[var(--surface-soft)] text-[var(--ink)] hover:bg-[var(--surface-card)]'
+              }`}
+            >
+              <span>{notifEnabled ? 'ON ✓' : 'OFF'}</span>
+            </button>
+          </div>
+        </div>
+      </Card>
 
       {/* Start Date Configuration */}
       <Card title="Transformation Schedule & Start Date" subtitle="Set your official Day 1 date to calculate 90-day progress" color="cream">
@@ -148,39 +227,6 @@ export const SettingsView: React.FC<SettingsViewProps> = () => {
             >
               <Trash2 className="h-3.5 w-3.5" />
               <span>{wipeSuccess ? 'Wiped ✓' : 'Wipe All Data'}</span>
-            </button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Sound & Alert Preferences */}
-      <Card title="Audio & Alarm Diagnostics" subtitle="Test alert chime volume and browser notifications" color="cream">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 pt-2">
-          <div className="flex items-center justify-between rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3.5">
-            <div>
-              <span className="block font-bold text-xs text-[var(--ink)]">Audio Chime Test</span>
-              <span className="text-[11px] text-[var(--text-muted)]">Boosted Web Audio chime sound</span>
-            </div>
-            <button
-              onClick={handleAudioTest}
-              className="flex items-center gap-1.5 rounded-full border border-[var(--hairline)] bg-[var(--surface-soft)] px-3 py-2 text-xs font-bold text-[var(--ink)] hover:bg-[var(--surface-card)] transition min-h-[40px]"
-            >
-              <Volume2 className="h-4 w-4 text-[var(--text-muted)]" />
-              <span>Test Chime</span>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3.5">
-            <div>
-              <span className="block font-bold text-xs text-[var(--ink)]">Browser Notifications</span>
-              <span className="text-[11px] text-[var(--text-muted)]">Water break & routine alerts</span>
-            </div>
-            <button
-              onClick={handleNotifPermission}
-              className="flex items-center gap-1.5 rounded-full bg-[#ff4d8b] px-3.5 py-2 text-xs font-bold text-white hover:opacity-90 transition shadow-sm min-h-[40px]"
-            >
-              <Bell className="h-3.5 w-3.5 text-white" />
-              <span>Request</span>
             </button>
           </div>
         </div>

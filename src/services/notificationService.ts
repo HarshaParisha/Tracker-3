@@ -1,18 +1,46 @@
-// Web Notification & Audio Alert Service
+// Web Notification & Audio Alert Service with User Preference Controls
 
 class NotificationService {
   private audioCtx: AudioContext | null = null;
 
+  public isSoundEnabled(): boolean {
+    if (typeof window === 'undefined') return false;
+    const saved = localStorage.getItem('tracker_sound_enabled');
+    return saved === 'true'; // Default is FALSE (OFF)
+  }
+
+  public setSoundEnabled(enabled: boolean): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tracker_sound_enabled', enabled ? 'true' : 'false');
+    }
+  }
+
+  public isNotifEnabled(): boolean {
+    if (typeof window === 'undefined') return false;
+    const saved = localStorage.getItem('tracker_notif_enabled');
+    return saved === 'true'; // Default is FALSE (OFF)
+  }
+
+  public setNotifEnabled(enabled: boolean): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tracker_notif_enabled', enabled ? 'true' : 'false');
+    }
+  }
+
   private initAudio() {
     if (!this.audioCtx) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtx) {
         this.audioCtx = new AudioCtx();
       }
     }
   }
 
-  public playChime() {
+  public playChime(force: boolean = false) {
+    if (!force && !this.isSoundEnabled()) return; // Suppressed if Sound is OFF
+
     try {
       this.initAudio();
       if (!this.audioCtx) return;
@@ -30,7 +58,7 @@ class NotificationService {
       osc1.frequency.setValueAtTime(659.25, now); // E5
       osc1.frequency.exponentialRampToValueAtTime(987.77, now + 0.12); // B5
 
-      gain1.gain.setValueAtTime(0.35, now); // Boosted volume
+      gain1.gain.setValueAtTime(0.35, now);
       gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
 
       osc1.connect(gain1);
@@ -66,8 +94,11 @@ class NotificationService {
   }
 
   public sendNotification(title: string, body: string) {
-    this.playChime();
-    if ('Notification' in window && Notification.permission === 'granted') {
+    if (this.isSoundEnabled()) {
+      this.playChime(true);
+    }
+
+    if (this.isNotifEnabled() && 'Notification' in window && Notification.permission === 'granted') {
       new Notification(title, {
         body,
         icon: '/vite.svg',
