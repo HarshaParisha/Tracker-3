@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { MonsterLogin } from '@/components/auth/MonsterLogin';
 
 import { DashboardView } from '@/views/DashboardView';
 import { RoutineView } from '@/views/RoutineView';
@@ -17,8 +18,10 @@ import { SettingsView } from '@/views/SettingsView';
 import { getDayNumber } from '@/utils/constants';
 import { pullSupabaseToLocal } from '@/lib/supabase';
 import { initRoutineScheduler } from '@/services/routineScheduler';
+import { authService } from '@/services/authService';
 
 export const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(authService.isAuthenticated());
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -28,9 +31,11 @@ export const App: React.FC = () => {
 
   // Initial cloud database sync & routine notification scheduler initialization on startup
   useEffect(() => {
-    pullSupabaseToLocal();
-    initRoutineScheduler();
-  }, []);
+    if (isAuthenticated) {
+      pullSupabaseToLocal();
+      initRoutineScheduler();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isDark) {
@@ -39,6 +44,10 @@ export const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  if (!isAuthenticated) {
+    return <MonsterLogin onSuccess={() => setIsAuthenticated(true)} />;
+  }
 
   const renderActiveView = () => {
     switch (activeTab) {

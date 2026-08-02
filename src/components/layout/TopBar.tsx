@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Menu, Bell, BellCheck, Volume2, Calendar, Moon, Sun } from 'lucide-react';
+import { Menu, Bell, BellCheck, Volume2, Calendar, Moon, Sun, LogOut } from 'lucide-react';
 import { notificationService } from '@/services/notificationService';
+import { authService } from '@/services/authService';
 
 interface TopBarProps {
   dayNumber: number;
@@ -33,6 +34,12 @@ export const TopBar: React.FC<TopBarProps> = React.memo(({
     notificationService.playChime();
   };
 
+  const handleLogout = () => {
+    if (confirm('Lock application and log out?')) {
+      authService.logout();
+    }
+  };
+
   const todayString = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -60,7 +67,7 @@ export const TopBar: React.FC<TopBarProps> = React.memo(({
           </div>
         </div>
 
-        {/* Right Side: Theme, Chime & Alerts */}
+        {/* Right Side: Theme, Chime, Alerts & Logout */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Theme Toggle Button */}
           <button
@@ -91,6 +98,15 @@ export const TopBar: React.FC<TopBarProps> = React.memo(({
           >
             {notifGranted ? <BellCheck className="h-3.5 w-3.5 text-white" /> : <Bell className="h-3.5 w-3.5 text-[#ff4d8b]" />}
             <span className="hidden sm:inline">{notifGranted ? 'Reminders Active' : 'Enable Alerts'}</span>
+          </button>
+
+          {/* Secure Logout Button */}
+          <button
+            onClick={handleLogout}
+            title="Lock application & Logout"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500/20 transition"
+          >
+            <LogOut className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
