@@ -25,7 +25,13 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('tracker_theme_dark');
+      if (saved !== null) return saved === 'true';
+    }
+    return true; // Default dark theme
+  });
 
   const dayNumber = getDayNumber();
 
@@ -40,8 +46,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('tracker_theme_dark', 'true');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('tracker_theme_dark', 'false');
     }
   }, [isDark]);
 
