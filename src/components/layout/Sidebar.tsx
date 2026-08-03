@@ -119,14 +119,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           <div className="mb-6 flex items-center justify-between border-b border-[var(--hairline)] pb-4">
             {!isCollapsed ? (
               <>
-                <div className="flex items-center gap-2.5">
-                  <img src="/favicon.png" alt="Tracker Logo" className="h-8 w-8 rounded-lg shadow-sm shrink-0 object-cover" />
-                  <div>
-                    <h1 className="font-['Space_Grotesk'] text-xl font-extrabold tracking-tight text-[var(--ink)]">
-                      Tracker<span className="text-[#ff4d8b]">.</span>
-                    </h1>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">90-DAY TRANSFORMATION</p>
-                  </div>
+                <div>
+                  <h1 className="font-['Space_Grotesk'] text-xl font-extrabold tracking-tight text-[var(--ink)]">
+                    Tracker<span className="text-[#ff4d8b]">.</span>
+                  </h1>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">90-DAY TRANSFORMATION</p>
                 </div>
                 <button
                   onClick={onToggleCollapse}
@@ -140,9 +137,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               <button
                 onClick={onToggleCollapse}
                 title="Expand Sidebar"
-                className="mx-auto flex items-center justify-center rounded-lg p-1 hover:bg-[var(--surface-card)] transition"
+                className="mx-auto flex items-center justify-center rounded-lg p-1.5 text-[var(--text-muted)] hover:bg-[var(--surface-card)] hover:text-[var(--ink)] transition"
               >
-                <img src="/favicon.png" alt="Tracker Logo" className="h-7 w-7 rounded-md shadow-sm shrink-0 object-cover" />
+                <PanelLeft className="h-5 w-5 text-[#ff4d8b]" />
               </button>
             )}
           </div>
@@ -261,14 +258,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           <div>
             {/* Mobile Header */}
             <div className="mb-6 flex items-center justify-between border-b border-[var(--hairline)] pb-4">
-              <div className="flex items-center gap-2.5">
-                <img src="/favicon.png" alt="Tracker Logo" className="h-8 w-8 rounded-lg shadow-sm shrink-0 object-cover" />
-                <div>
-                  <h1 className="font-['Space_Grotesk'] text-xl font-extrabold tracking-tight text-[var(--ink)]">
-                    Tracker<span className="text-[#ff4d8b]">.</span>
-                  </h1>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">90-DAY TRANSFORMATION</p>
-                </div>
+              <div>
+                <h1 className="font-['Space_Grotesk'] text-xl font-extrabold tracking-tight text-[var(--ink)]">
+                  Tracker<span className="text-[#ff4d8b]">.</span>
+                </h1>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">90-DAY TRANSFORMATION</p>
               </div>
               <button
                 onClick={onCloseMobile}
