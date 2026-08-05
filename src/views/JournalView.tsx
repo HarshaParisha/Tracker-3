@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type JournalEntry } from '@/db/database';
 import { getTodayKey, getStartDate } from '@/utils/constants';
 import { syncJournalEntryToSupabase } from '@/lib/supabase';
+import { toPng } from 'html-to-image';
 import {
   Calendar,
   ChevronLeft,
@@ -13,6 +14,7 @@ import {
   RotateCcw,
   BookOpen,
   CheckCircle2,
+  Download,
 } from 'lucide-react';
 
 interface JournalViewProps {
@@ -37,8 +39,10 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
   const [content, setContent] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [copied, setCopied] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const isInitialMount = useRef(true);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   // Synchronize state when selectedDate changes or database entry loads
   useEffect(() => {
@@ -171,8 +175,32 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
     }
   };
 
+  // 4K A4 Paper Image Export Handler
+  const handleDownloadImage = async () => {
+    if (!exportRef.current) return;
+    try {
+      setIsExporting(true);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const dataUrl = await toPng(exportRef.current, {
+        quality: 1.0,
+        pixelRatio: 3, // 3x pixel scale for crystal clear 4K paper image clarity!
+        cacheBust: true,
+      });
+
+      const link = document.createElement('a');
+      link.download = `day${dayNumOfPlan}-journal.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Failed to export journal image:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto pb-12 sm:pb-10">
+    <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto pb-12 sm:pb-10 relative">
       {/* Top Header & Date Navigation Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -189,7 +217,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
           </p>
         </div>
 
-        {/* Date Controls */}
+        {/* Date Controls & Save/Export Actions */}
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
           {/* Day Navigation */}
           <div className="flex items-center rounded-xl border border-[var(--hairline)] bg-[var(--surface-soft)] p-1">
@@ -231,6 +259,21 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
               }`}
             >
               Today
+            </button>
+
+            {/* Export 4K Image Button (Placed beside Save Entry) */}
+            <button
+              onClick={handleDownloadImage}
+              disabled={isExporting}
+              className="flex items-center gap-2 rounded-xl border border-[#ff4d8b]/30 bg-[#ff4d8b]/10 px-3.5 py-2 text-xs font-bold text-[#ff4d8b] active:scale-95 hover:bg-[#ff4d8b]/20 transition shadow-xs disabled:opacity-50"
+              title="Download Journal Entry as 4K A4 Paper Image"
+            >
+              {isExporting ? (
+                <RotateCcw className="h-3.5 w-3.5 animate-spin text-[#ff4d8b]" />
+              ) : (
+                <Download className="h-3.5 w-3.5 text-[#ff4d8b]" />
+              )}
+              <span>{isExporting ? 'Exporting 4K...' : 'Download Image'}</span>
             </button>
 
             {/* Manual Save Button */}
@@ -307,7 +350,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
 
         {/* Writing Canvas */}
         <div className="p-4 sm:p-6 md:p-8 space-y-4">
-          {/* Optional Title Input (text-base prevents iOS Safari zoom on tap) */}
+          {/* Optional Title Input */}
           <input
             type="text"
             value={title}
@@ -373,6 +416,92 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
               <RotateCcw className="h-3 w-3 text-rose-500" />
               <span>Clear</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Off-screen Pristine 4K A4 Paper Target Node for Image Generation */}
+      <div className="fixed -left-[9999px] top-0 pointer-events-none opacity-0">
+        <div
+          ref={exportRef}
+          className={`w-[850px] min-h-[1180px] p-12 font-sans flex flex-col justify-between ${
+            isDark ? 'bg-[#121218] text-[#f4f4f5]' : 'bg-[#fffaf0] text-[#0a0a0a]'
+          }`}
+        >
+          <div>
+            {/* Header */}
+            <div className="flex items-center justify-between border-b-2 border-current/20 pb-4 mb-6">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="font-['Space_Grotesk'] text-3xl font-extrabold tracking-tight">
+                    DAILY JOURNAL
+                  </h1>
+                  <span className="rounded-full bg-[#ff4d8b] px-3.5 py-1 text-xs font-mono font-extrabold text-white">
+                    Day {dayNumOfPlan} of 90
+                  </span>
+                </div>
+                <p className="mt-1.5 text-xs font-semibold opacity-70 tracking-wide uppercase font-mono">
+                  {formattedDateString} • 90-DAY TRANSFORMATION PLAN
+                </p>
+              </div>
+
+              {/* Day Chips */}
+              <div className="flex items-center gap-1.5 font-mono text-xs font-extrabold">
+                {DAYS_OF_WEEK.map((dayLabel, idx) => {
+                  const isSelected = idx === dayIndexMonStart;
+                  return (
+                    <div
+                      key={dayLabel}
+                      className={`px-2.5 py-1 rounded-lg border ${
+                        isSelected
+                          ? 'bg-[#ff4d8b] text-white border-[#ff4d8b]'
+                          : 'bg-transparent opacity-40 border-current'
+                      }`}
+                    >
+                      {dayLabel}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Entry Title */}
+            {title && (
+              <h2 className="font-['Space_Grotesk'] text-2xl font-extrabold mb-5 pb-3 border-b border-current/15">
+                {title}
+              </h2>
+            )}
+
+            {/* Lined / Blank Paper Content */}
+            <div
+              style={
+                paperStyle === 'lined'
+                  ? {
+                      backgroundImage: isDark
+                        ? 'repeating-linear-gradient(transparent, transparent 31px, rgba(255, 255, 255, 0.08) 31px, rgba(255, 255, 255, 0.08) 32px)'
+                        : 'repeating-linear-gradient(transparent, transparent 31px, rgba(0, 0, 0, 0.08) 31px, rgba(0, 0, 0, 0.08) 32px)',
+                      lineHeight: '32px',
+                    }
+                  : { lineHeight: '30px' }
+              }
+              className="min-h-[750px] text-base font-normal whitespace-pre-wrap leading-relaxed px-2 py-1"
+            >
+              {content || 'No journal entry recorded for this day.'}
+            </div>
+          </div>
+
+          {/* Footer Watermark */}
+          <div className="mt-12 pt-4 border-t border-current/20 flex items-center justify-between font-mono text-xs opacity-75">
+            <div className="flex items-center gap-4">
+              <span><strong>{wordCount}</strong> words</span>
+              <span>•</span>
+              <span><strong>{charCount}</strong> chars</span>
+              <span>•</span>
+              <span>~<strong>{readTimeMin}</strong> min read</span>
+            </div>
+            <div className="font-extrabold tracking-wider">
+              TRACKER • 90-DAY TRANSFORMATION
+            </div>
           </div>
         </div>
       </div>
