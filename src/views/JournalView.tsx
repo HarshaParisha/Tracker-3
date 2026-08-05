@@ -212,7 +212,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
       if (typeof document !== 'undefined' && document.fonts) {
         await document.fonts.ready;
       }
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const dataUrl = await toPng(exportRef.current, {
         quality: 1.0,
@@ -452,60 +452,143 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
         </div>
       </div>
 
-      {/* Off-screen Pristine 4K A4 Paper Target Node for Image Generation (Guaranteed 0% Text Overlap) */}
-      <div className="fixed -left-[9999px] top-0 pointer-events-none opacity-0">
+      {/* Pristine 4K A4 Paper Target Node for Image Generation (100% Match with Reference Image 2) */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '850px',
+          zIndex: -9999,
+          pointerEvents: 'none',
+          opacity: 0,
+        }}
+      >
         <div
           ref={exportRef}
-          style={{ width: '850px', minHeight: '1180px', padding: '48px', fontFamily: 'sans-serif' }}
+          style={{
+            width: '850px',
+            minHeight: '1180px',
+            padding: '48px 48px 40px 48px',
+            fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            boxSizing: 'border-box',
+          }}
           className={`flex flex-col justify-between ${
             isDark ? 'bg-[#121218] text-[#f4f4f5]' : 'bg-[#fffaf0] text-[#0a0a0a]'
           }`}
         >
           <div>
-            {/* Header Block with Explicit Inline Pixel Spacing & Line Height */}
-            <div style={{ marginBottom: '24px', paddingBottom: '16px', borderBottom: '2px solid rgba(125,125,125,0.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '10px' }}>
+            {/* Header Block with Zero Overlap Guarantee */}
+            <div
+              style={{
+                marginBottom: '24px',
+                paddingBottom: '16px',
+                borderBottom: '2px solid rgba(125,125,125,0.25)',
+              }}
+            >
+              {/* Row 1: Left Title & Badge, Right Day Pills */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  marginBottom: '8px',
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <h1 style={{ fontSize: '32px', fontWeight: 900, fontFamily: 'Space Grotesk, system-ui, sans-serif', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>
+                  <h1
+                    style={{
+                      fontSize: '28px',
+                      fontWeight: 900,
+                      fontFamily: 'Space Grotesk, Inter, system-ui, sans-serif',
+                      letterSpacing: '-0.02em',
+                      margin: 0,
+                      lineHeight: '1',
+                      whiteSpace: 'nowrap',
+                      textTransform: 'uppercase',
+                    }}
+                  >
                     DAILY JOURNAL
                   </h1>
-                  <span style={{ backgroundColor: '#ff4d8b', color: '#ffffff', borderRadius: '9999px', padding: '4px 14px', fontSize: '11px', fontFamily: 'monospace', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                  <span
+                    style={{
+                      backgroundColor: '#ff4d8b',
+                      color: '#ffffff',
+                      borderRadius: '9999px',
+                      padding: '4px 14px',
+                      fontSize: '11px',
+                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                      fontWeight: 800,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     Day {dayNumOfPlan} of 90
                   </span>
                 </div>
+
+                {/* Day Chips */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                  }}
+                >
+                  {DAYS_OF_WEEK.map((dayLabel, idx) => {
+                    const isSelected = idx === dayIndexMonStart;
+                    return (
+                      <div
+                        key={dayLabel}
+                        style={{
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          border: isSelected ? '1px solid #ff4d8b' : '1px solid currentColor',
+                          backgroundColor: isSelected ? '#ff4d8b' : 'transparent',
+                          color: isSelected ? '#ffffff' : 'inherit',
+                          opacity: isSelected ? 1 : 0.4,
+                        }}
+                      >
+                        {dayLabel}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 14px 0', opacity: 0.75, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {/* Row 2: Date Subtitle across full width */}
+              <p
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  margin: 0,
+                  opacity: 0.65,
+                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  lineHeight: '1.2',
+                }}
+              >
                 {formattedDateString} • 90-DAY TRANSFORMATION PLAN
               </p>
-
-              {/* Day Chips */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'monospace', fontSize: '11px', fontWeight: 800 }}>
-                <span style={{ opacity: 0.6, marginRight: '4px' }}>DAY:</span>
-                {DAYS_OF_WEEK.map((dayLabel, idx) => {
-                  const isSelected = idx === dayIndexMonStart;
-                  return (
-                    <div
-                      key={dayLabel}
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: '8px',
-                        border: isSelected ? '1px solid #ff4d8b' : '1px solid currentColor',
-                        backgroundColor: isSelected ? '#ff4d8b' : 'transparent',
-                        color: isSelected ? '#ffffff' : 'inherit',
-                        opacity: isSelected ? 1 : 0.45,
-                      }}
-                    >
-                      {dayLabel}
-                    </div>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Entry Headline Title */}
             {title ? (
-              <h2 style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'Space Grotesk, system-ui, sans-serif', margin: '0 0 20px 0', paddingBottom: '12px', borderBottom: '1px solid rgba(125,125,125,0.2)' }}>
+              <h2
+                style={{
+                  fontSize: '22px',
+                  fontWeight: 800,
+                  fontFamily: 'Space Grotesk, Inter, system-ui, sans-serif',
+                  margin: '0 0 20px 0',
+                  paddingBottom: '12px',
+                  borderBottom: '1px solid rgba(125,125,125,0.2)',
+                  lineHeight: '1.3',
+                }}
+              >
                 {title}
               </h2>
             ) : null}
@@ -519,8 +602,12 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                         ? 'repeating-linear-gradient(transparent, transparent 31px, rgba(255, 255, 255, 0.08) 31px, rgba(255, 255, 255, 0.08) 32px)'
                         : 'repeating-linear-gradient(transparent, transparent 31px, rgba(0, 0, 0, 0.08) 31px, rgba(0, 0, 0, 0.08) 32px)',
                       lineHeight: '32px',
+                      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     }
-                  : { lineHeight: '30px' }
+                  : {
+                      lineHeight: '30px',
+                      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    }
               }
               className="min-h-[750px] text-base font-normal whitespace-pre-wrap leading-relaxed px-2 py-1"
             >
@@ -529,7 +616,19 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
           </div>
 
           {/* Footer Watermark */}
-          <div style={{ marginTop: '48px', paddingTop: '16px', borderTop: '1px solid rgba(125,125,125,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '11px', opacity: 0.75 }}>
+          <div
+            style={{
+              marginTop: '48px',
+              paddingTop: '16px',
+              borderTop: '1px solid rgba(125,125,125,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+              fontSize: '11px',
+              opacity: 0.7,
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <span><strong>{wordCount}</strong> words</span>
               <span>•</span>
