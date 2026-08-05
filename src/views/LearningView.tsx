@@ -137,32 +137,32 @@ export const LearningView: React.FC<LearningViewProps> = () => {
           color="cream"
         >
           <div className="space-y-2 py-2">
-            <label className="flex items-center gap-3 rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs font-bold text-[var(--ink)] cursor-pointer">
+            <label className="flex items-center gap-3 rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs font-bold text-[var(--ink)] cursor-pointer hover:border-[var(--brand-pink)] transition">
               <input
                 type="checkbox"
                 checked={revDsa}
                 onChange={(e) => setRevDsa(e.target.checked)}
                 className="h-4 w-4 rounded accent-[#ff4d8b]"
               />
-              <span>Revised DSA Problem Patterns & Edge Cases</span>
+              <span>DSA Revised</span>
             </label>
-            <label className="flex items-center gap-3 rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs font-bold text-[var(--ink)] cursor-pointer">
+            <label className="flex items-center gap-3 rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs font-bold text-[var(--ink)] cursor-pointer hover:border-[var(--brand-pink)] transition">
               <input
                 type="checkbox"
                 checked={revPython}
                 onChange={(e) => setRevPython(e.target.checked)}
                 className="h-4 w-4 rounded accent-[#ff4d8b]"
               />
-              <span>Revised Python Snippets & Architecture</span>
+              <span>Python Revised</span>
             </label>
-            <label className="flex items-center gap-3 rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs font-bold text-[var(--ink)] cursor-pointer">
+            <label className="flex items-center gap-3 rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs font-bold text-[var(--ink)] cursor-pointer hover:border-[var(--brand-pink)] transition">
               <input
                 type="checkbox"
                 checked={revNotes}
                 onChange={(e) => setRevNotes(e.target.checked)}
                 className="h-4 w-4 rounded accent-[#ff4d8b]"
               />
-              <span>Reviewed Daily Handwritten & Digital Notes</span>
+              <span>Daily Notes Revised</span>
             </label>
           </div>
         </Card>
