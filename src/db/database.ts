@@ -46,7 +46,17 @@ export interface JobApplication {
   id: string; // Key
   company: string;
   role: string;
-  status: 'applied' | 'screening' | 'interview' | 'offer' | 'rejected';
+  status:
+    | 'applied'
+    | 'shortlisted'
+    | 'assessment'
+    | 'screening'
+    | 'interview'
+    | 'hr_round'
+    | 'offer'
+    | 'rejected'
+    | 'withdrawn'
+    | 'joined';
   date: string; // YYYY-MM-DD
   notes?: string;
 }

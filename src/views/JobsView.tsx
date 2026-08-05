@@ -61,14 +61,19 @@ export const JobsView: React.FC<JobsViewProps> = () => {
   });
 
   const getStatusBadge = (s: JobApplication['status']) => {
-    const badgeStyles = {
+    const badgeStyles: Record<JobApplication['status'], string> = {
       applied: 'border-[#b8a4ed] bg-[#b8a4ed] text-[#0a0a0a]',
-      screening: 'border-[#e8b94a] bg-[#e8b94a] text-[#0a0a0a]',
+      shortlisted: 'border-[#70a1ff] bg-[#70a1ff] text-[#0a0a0a]',
+      assessment: 'border-[#e8b94a] bg-[#e8b94a] text-[#0a0a0a]',
+      screening: 'border-[#ffb084] bg-[#ffb084] text-[#0a0a0a]',
       interview: 'border-[#ff4d8b] bg-[#ff4d8b] text-white',
+      hr_round: 'border-[#a55eea] bg-[#a55eea] text-white',
       offer: 'border-[#a4d4c5] bg-[#a4d4c5] text-[#0a0a0a]',
       rejected: 'border-[var(--hairline)] bg-[var(--surface-soft)] text-[var(--text-muted)]',
+      withdrawn: 'border-slate-500 bg-slate-500 text-white',
+      joined: 'border-[#2ed573] bg-[#2ed573] text-[#0a0a0a]',
     };
-    return badgeStyles[s];
+    return badgeStyles[s] || badgeStyles.applied;
   };
 
   return (
@@ -118,10 +123,15 @@ export const JobsView: React.FC<JobsViewProps> = () => {
                 className="w-full rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-2.5 text-xs font-semibold text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
               >
                 <option value="applied" className="bg-[var(--canvas)] text-[var(--ink)]">Applied</option>
+                <option value="shortlisted" className="bg-[var(--canvas)] text-[var(--ink)]">Shortlisted</option>
+                <option value="assessment" className="bg-[var(--canvas)] text-[var(--ink)]">Assessment</option>
                 <option value="screening" className="bg-[var(--canvas)] text-[var(--ink)]">Screening</option>
                 <option value="interview" className="bg-[var(--canvas)] text-[var(--ink)]">Interview</option>
+                <option value="hr_round" className="bg-[var(--canvas)] text-[var(--ink)]">HR Round</option>
                 <option value="offer" className="bg-[var(--canvas)] text-[var(--ink)]">Offer</option>
                 <option value="rejected" className="bg-[var(--canvas)] text-[var(--ink)]">Rejected</option>
+                <option value="withdrawn" className="bg-[var(--canvas)] text-[var(--ink)]">Withdrawn</option>
+                <option value="joined" className="bg-[var(--canvas)] text-[var(--ink)]">Joined</option>
               </select>
             </div>
             <div>
@@ -168,10 +178,15 @@ export const JobsView: React.FC<JobsViewProps> = () => {
             >
               <option value="all">All Statuses</option>
               <option value="applied">Applied</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="assessment">Assessment</option>
               <option value="screening">Screening</option>
               <option value="interview">Interview</option>
+              <option value="hr_round">HR Round</option>
               <option value="offer">Offer</option>
               <option value="rejected">Rejected</option>
+              <option value="withdrawn">Withdrawn</option>
+              <option value="joined">Joined</option>
             </select>
           </div>
         }
@@ -192,10 +207,15 @@ export const JobsView: React.FC<JobsViewProps> = () => {
                     className={`rounded-full border px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider focus:outline-none cursor-pointer ${getStatusBadge(app.status)}`}
                   >
                     <option value="applied" className="bg-[var(--canvas)] text-[var(--ink)]">Applied</option>
+                    <option value="shortlisted" className="bg-[var(--canvas)] text-[var(--ink)]">Shortlisted</option>
+                    <option value="assessment" className="bg-[var(--canvas)] text-[var(--ink)]">Assessment</option>
                     <option value="screening" className="bg-[var(--canvas)] text-[var(--ink)]">Screening</option>
                     <option value="interview" className="bg-[var(--canvas)] text-[var(--ink)]">Interview</option>
+                    <option value="hr_round" className="bg-[var(--canvas)] text-[var(--ink)]">HR Round</option>
                     <option value="offer" className="bg-[var(--canvas)] text-[var(--ink)]">Offer</option>
                     <option value="rejected" className="bg-[var(--canvas)] text-[var(--ink)]">Rejected</option>
+                    <option value="withdrawn" className="bg-[var(--canvas)] text-[var(--ink)]">Withdrawn</option>
+                    <option value="joined" className="bg-[var(--canvas)] text-[var(--ink)]">Joined</option>
                   </select>
                 </div>
               </div>
@@ -249,10 +269,15 @@ export const JobsView: React.FC<JobsViewProps> = () => {
                       className={`rounded-full border px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider focus:outline-none cursor-pointer ${getStatusBadge(app.status)}`}
                     >
                       <option value="applied" className="bg-[var(--canvas)] text-[var(--ink)]">Applied</option>
+                      <option value="shortlisted" className="bg-[var(--canvas)] text-[var(--ink)]">Shortlisted</option>
+                      <option value="assessment" className="bg-[var(--canvas)] text-[var(--ink)]">Assessment</option>
                       <option value="screening" className="bg-[var(--canvas)] text-[var(--ink)]">Screening</option>
                       <option value="interview" className="bg-[var(--canvas)] text-[var(--ink)]">Interview</option>
+                      <option value="hr_round" className="bg-[var(--canvas)] text-[var(--ink)]">HR Round</option>
                       <option value="offer" className="bg-[var(--canvas)] text-[var(--ink)]">Offer</option>
                       <option value="rejected" className="bg-[var(--canvas)] text-[var(--ink)]">Rejected</option>
+                      <option value="withdrawn" className="bg-[var(--canvas)] text-[var(--ink)]">Withdrawn</option>
+                      <option value="joined" className="bg-[var(--canvas)] text-[var(--ink)]">Joined</option>
                     </select>
                   </td>
                   <td className="py-3 text-[var(--text-muted)] max-w-xs truncate">{app.notes || '—'}</td>
