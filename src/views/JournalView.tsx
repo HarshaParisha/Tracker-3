@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type JournalEntry } from '@/db/database';
 import { getTodayKey, getStartDate } from '@/utils/constants';
-import { syncJournalEntryToSupabase } from '@/lib/supabase';
+import { syncJournalEntryToSupabase, pullSupabaseToLocal } from '@/lib/supabase';
 import { toPng } from 'html-to-image';
 import {
   Calendar,
@@ -43,6 +43,14 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
 
   const isInitialMount = useRef(true);
   const exportRef = useRef<HTMLDivElement>(null);
+
+  // Auto pull from Supabase on view mount & window focus (cross-device sync)
+  useEffect(() => {
+    pullSupabaseToLocal();
+    const handleFocus = () => pullSupabaseToLocal();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   // Synchronize state when selectedDate changes or database entry loads
   useEffect(() => {

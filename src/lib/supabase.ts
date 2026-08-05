@@ -232,12 +232,14 @@ export async function syncLocalToSupabase(): Promise<{ success: boolean; message
       await client.from('journal_entries').upsert(
         journalEntries.map((r) => ({
           date: r.date,
-          wins: r.wins,
-          mistakes: r.mistakes,
-          lessons: r.lessons,
-          gratitude: r.gratitude,
-          tomorrow: r.tomorrow,
-          free: r.free,
+          title: r.title || '',
+          content: r.content || r.free || '',
+          wins: r.wins || '',
+          mistakes: r.mistakes || '',
+          lessons: r.lessons || '',
+          gratitude: r.gratitude || '',
+          tomorrow: r.tomorrow || '',
+          free: r.free || r.content || '',
           updated_at: new Date().toISOString(),
         })),
         { onConflict: 'date' }
@@ -322,12 +324,14 @@ export async function pullSupabaseToLocal(): Promise<void> {
     if (journalData && journalData.length > 0) {
       const records: JournalEntry[] = journalData.map((j: any) => ({
         date: j.date,
+        title: j.title || '',
+        content: j.content || j.free || '',
+        free: j.free || j.content || '',
         wins: j.wins || '',
         mistakes: j.mistakes || '',
         lessons: j.lessons || '',
         gratitude: j.gratitude || '',
         tomorrow: j.tomorrow || '',
-        free: j.free || '',
       }));
       await db.journalEntries.bulkPut(records);
     }
