@@ -153,7 +153,7 @@ export const ProgressView: React.FC<ProgressViewProps> = ({ isDark = true }) => 
               <div
                 key={cell.dayNum}
                 title={`Day ${cell.dayNum} (${cell.date}): ${cell.count} tasks executed`}
-                className={`h-5 w-full rounded-md border text-[9px] font-mono flex items-center justify-center transition hover:scale-110 cursor-pointer ${cell.intensity}`}
+                className={`h-6 sm:h-5 w-full rounded-md border text-[10px] sm:text-[9px] font-mono flex items-center justify-center transition-all duration-150 active:scale-95 hover:scale-110 cursor-pointer ${cell.intensity}`}
               >
                 {cell.dayNum}
               </div>

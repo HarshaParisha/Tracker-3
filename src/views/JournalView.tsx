@@ -172,15 +172,15 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-10">
+    <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto pb-12 sm:pb-10">
       {/* Top Header & Date Navigation Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="font-['Space_Grotesk'] text-3xl font-extrabold tracking-tight text-[var(--ink)]">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <h2 className="font-['Space_Grotesk'] text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--ink)]">
               Daily Journal
             </h2>
-            <span className="rounded-full bg-[#ff4d8b]/15 px-3 py-1 text-xs font-mono font-bold text-[#ff4d8b] border border-[#ff4d8b]/30">
+            <span className="rounded-full bg-[#ff4d8b]/15 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-mono font-bold text-[#ff4d8b] border border-[#ff4d8b]/30">
               Day {dayNumOfPlan} of 90
             </span>
           </div>
@@ -190,19 +190,19 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
         </div>
 
         {/* Date Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
           {/* Day Navigation */}
           <div className="flex items-center rounded-xl border border-[var(--hairline)] bg-[var(--surface-soft)] p-1">
             <button
               onClick={handlePrevDay}
               title="Previous Day"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--ink)] hover:bg-[var(--surface-card)] transition"
+              className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-[var(--ink)] active:scale-95 hover:bg-[var(--surface-card)] transition"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
 
             <div className="relative px-2 flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-[#ff4d8b]" />
+              <Calendar className="h-4 w-4 text-[#ff4d8b]" />
               <input
                 type="date"
                 value={selectedDate}
@@ -214,48 +214,50 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
             <button
               onClick={handleNextDay}
               title="Next Day"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--ink)] hover:bg-[var(--surface-card)] transition"
+              className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-lg text-[var(--ink)] active:scale-95 hover:bg-[var(--surface-card)] transition"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Today Shortcut */}
-          <button
-            onClick={handleToday}
-            className={`rounded-xl px-3 py-2 text-xs font-bold font-mono transition border ${
-              selectedDate === todayKey
-                ? 'bg-[#ff4d8b] text-white border-[#ff4d8b]'
-                : 'bg-[var(--surface-soft)] text-[var(--ink)] border-[var(--hairline)] hover:bg-[var(--surface-card)]'
-            }`}
-          >
-            Today
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Today Shortcut */}
+            <button
+              onClick={handleToday}
+              className={`rounded-xl px-3 py-2 text-xs font-bold font-mono transition border active:scale-95 ${
+                selectedDate === todayKey
+                  ? 'bg-[#ff4d8b] text-white border-[#ff4d8b]'
+                  : 'bg-[var(--surface-soft)] text-[var(--ink)] border-[var(--hairline)] hover:bg-[var(--surface-card)]'
+              }`}
+            >
+              Today
+            </button>
 
-          {/* Manual Save Button */}
-          <button
-            onClick={() => handleSave()}
-            className="flex items-center gap-2 rounded-xl bg-[#ff4d8b] px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition shadow-sm"
-          >
-            {saveStatus === 'saving' ? (
-              <RotateCcw className="h-3.5 w-3.5 animate-spin text-white" />
-            ) : saveStatus === 'saved' ? (
-              <Check className="h-3.5 w-3.5 text-white" />
-            ) : (
-              <Save className="h-3.5 w-3.5 text-white" />
-            )}
-            <span>{saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved ✓' : 'Save Entry'}</span>
-          </button>
+            {/* Manual Save Button */}
+            <button
+              onClick={() => handleSave()}
+              className="flex items-center gap-2 rounded-xl bg-[#ff4d8b] px-4 py-2 text-xs font-bold text-white active:scale-95 hover:opacity-90 transition shadow-sm"
+            >
+              {saveStatus === 'saving' ? (
+                <RotateCcw className="h-3.5 w-3.5 animate-spin text-white" />
+              ) : saveStatus === 'saved' ? (
+                <Check className="h-3.5 w-3.5 text-white" />
+              ) : (
+                <Save className="h-3.5 w-3.5 text-white" />
+              )}
+              <span>{saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved ✓' : 'Save Entry'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Aesthetic Dairy Main Notebook Card */}
-      <div className="rounded-3xl border border-[var(--hairline)] bg-[var(--surface-card)] shadow-lg overflow-hidden transition-all">
+      <div className="rounded-2xl sm:rounded-3xl border border-[var(--hairline)] bg-[var(--surface-card)] shadow-lg overflow-hidden transition-all">
         {/* Notebook Top Bar (Inspired by physical diary layout) */}
-        <div className="border-b border-[var(--hairline)] bg-[var(--surface-soft)] px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="border-b border-[var(--hairline)] bg-[var(--surface-soft)] px-4 sm:px-6 py-3.5 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
           {/* Day of Week Selector Bar (MON TUE WED THU FRI SAT SUN) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-            <span className="text-[10px] font-mono font-bold text-[var(--text-muted)] mr-1 uppercase tracking-wider">
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none w-full md:w-auto">
+            <span className="text-[10px] font-mono font-bold text-[var(--text-muted)] mr-1 uppercase tracking-wider shrink-0">
               DAY:
             </span>
             {DAYS_OF_WEEK.map((dayLabel, idx) => {
@@ -264,7 +266,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                 <button
                   key={dayLabel}
                   onClick={() => handleSelectDayOfWeek(idx)}
-                  className={`flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-[10px] font-mono font-extrabold transition-all ${
+                  className={`flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-[10px] font-mono font-extrabold transition-all shrink-0 active:scale-95 ${
                     isSelected
                       ? 'bg-[#ff4d8b] text-white shadow-xs scale-105'
                       : 'bg-[var(--canvas)] text-[var(--text-muted)] hover:text-[var(--ink)] border border-[var(--hairline)]'
@@ -282,11 +284,11 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
           </div>
 
           {/* Right Top Bar Options */}
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center justify-between md:justify-end gap-3 text-xs w-full md:w-auto pt-1 md:pt-0 border-t md:border-t-0 border-[var(--hairline)]">
             {/* Lined Paper vs Blank Toggle */}
             <button
               onClick={handleToggleStyle}
-              className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1.5 text-[11px] font-bold text-[var(--ink)] hover:bg-[var(--surface-card)] transition"
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1.5 text-[11px] font-bold text-[var(--ink)] active:scale-95 hover:bg-[var(--surface-card)] transition"
               title="Toggle Notebook Lined Paper style"
             >
               <BookOpen className="h-3.5 w-3.5 text-[#ff4d8b]" />
@@ -304,14 +306,14 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
         </div>
 
         {/* Writing Canvas */}
-        <div className="p-6 md:p-8 space-y-4">
-          {/* Optional Title Input */}
+        <div className="p-4 sm:p-6 md:p-8 space-y-4">
+          {/* Optional Title Input (text-base prevents iOS Safari zoom on tap) */}
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Headline or Title for today's reflection..."
-            className="w-full bg-transparent font-['Space_Grotesk'] text-xl md:text-2xl font-extrabold text-[var(--ink)] placeholder-[var(--text-muted)] focus:outline-none border-b border-[var(--hairline)] pb-3"
+            className="w-full bg-transparent font-['Space_Grotesk'] text-lg sm:text-xl md:text-2xl font-extrabold text-[var(--ink)] placeholder-[var(--text-muted)] focus:outline-none border-b border-[var(--hairline)] pb-3"
           />
 
           {/* Lined / Blank Free-Form Writer Canvas */}
@@ -330,15 +332,15 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                     }
                   : { lineHeight: '28px' }
               }
-              className="min-h-[460px] w-full resize-y bg-transparent p-2 text-sm md:text-base font-normal text-[var(--ink)] placeholder-[var(--text-muted)] focus:outline-none transition-all"
+              className="min-h-[380px] sm:min-h-[460px] w-full resize-y bg-transparent p-2 text-base font-normal text-[var(--ink)] placeholder-[var(--text-muted)] focus:outline-none transition-all"
             />
           </div>
         </div>
 
         {/* Notebook Footer Toolbar & Metrics */}
-        <div className="border-t border-[var(--hairline)] bg-[var(--surface-soft)] px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-muted)] font-mono">
+        <div className="border-t border-[var(--hairline)] bg-[var(--surface-soft)] px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-muted)] font-mono">
           {/* Metrics */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs">
             <span>
               <strong className="text-[var(--ink)] font-extrabold">{wordCount}</strong> words
             </span>
@@ -355,7 +357,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
             <button
               onClick={handleCopy}
               disabled={!content}
-              className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1 text-[11px] font-bold text-[var(--ink)] hover:bg-[var(--surface-card)] transition disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1.5 text-[11px] font-bold text-[var(--ink)] active:scale-95 hover:bg-[var(--surface-card)] transition disabled:opacity-40"
               title="Copy journal entry"
             >
               {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-[var(--text-muted)]" />}
@@ -365,7 +367,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
             <button
               onClick={handleClear}
               disabled={!content && !title}
-              className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1 text-[11px] font-bold text-rose-500 hover:bg-rose-500/10 transition disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1.5 text-[11px] font-bold text-rose-500 active:scale-95 hover:bg-rose-500/10 transition disabled:opacity-40"
               title="Clear entry"
             >
               <RotateCcw className="h-3 w-3 text-rose-500" />
