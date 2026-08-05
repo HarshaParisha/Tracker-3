@@ -254,7 +254,7 @@ export async function syncLocalToSupabase(): Promise<{ success: boolean; message
           lessons: r.lessons || '',
           gratitude: r.gratitude || '',
           tomorrow: r.tomorrow || '',
-          free: r.free || r.content || '',
+          free: r.title ? `${r.title}\n\n${r.content || ''}` : (r.free || r.content || ''),
           updated_at: new Date().toISOString(),
         })),
         { onConflict: 'date' }
