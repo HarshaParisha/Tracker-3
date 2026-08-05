@@ -55,17 +55,28 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
   // Synchronize state when selectedDate changes or database entry loads
   useEffect(() => {
     if (journalEntry) {
-      setTitle(journalEntry.title || '');
-      const mainText = (journalEntry.content && journalEntry.content.trim())
+      const rawTitle = journalEntry.title || '';
+      const rawContent = (journalEntry.content && journalEntry.content.trim())
         ? journalEntry.content
         : (journalEntry.free && journalEntry.free.trim())
           ? journalEntry.free
           : '';
 
-      if (mainText) {
-        setContent(mainText);
+      if (rawTitle) {
+        setTitle(rawTitle);
+        setContent(rawContent);
+      } else if (rawContent) {
+        // Automatically extract first line as headline if title wasn't saved separately
+        const lines = rawContent.split('\n');
+        if (lines.length > 1 && lines[0].length < 120 && !lines[0].startsWith('###')) {
+          setTitle(lines[0].trim());
+          setContent(lines.slice(1).join('\n').trim());
+        } else {
+          setTitle('');
+          setContent(rawContent);
+        }
       } else {
-        // Build legacy text fallback if opening an old multi-field entry
+        // Legacy fallback
         const parts = [];
         if (journalEntry.wins) parts.push(`### Accomplishments & Wins\n${journalEntry.wins}`);
         if (journalEntry.mistakes) parts.push(`### Friction & Improvement\n${journalEntry.mistakes}`);
@@ -73,8 +84,10 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
         if (journalEntry.gratitude) parts.push(`### Daily Gratitude\n${journalEntry.gratitude}`);
         if (journalEntry.tomorrow) parts.push(`### Tomorrow's Focus\n${journalEntry.tomorrow}`);
         if (parts.length > 0) {
+          setTitle('');
           setContent(parts.join('\n\n'));
         } else {
+          setTitle('');
           setContent('');
         }
       }
@@ -93,7 +106,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
         date: selectedDate,
         title: newTitle,
         content: newContent,
-        free: newContent, // Dual-write for backward compatibility
+        free: newTitle ? `${newTitle}\n\n${newContent}` : newContent, // Store combined in free for fallback
       };
       await db.journalEntries.put(entry);
       syncJournalEntryToSupabase(entry);
@@ -164,12 +177,13 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
   });
 
   // Writing statistics
-  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
-  const charCount = content.length;
+  const fullCombinedText = `${title ? title + ' ' : ''}${content}`;
+  const wordCount = fullCombinedText.trim() ? fullCombinedText.trim().split(/\s+/).length : 0;
+  const charCount = fullCombinedText.length;
   const readTimeMin = Math.max(1, Math.ceil(wordCount / 200));
 
   const handleCopy = () => {
-    if (!content) return;
+    if (!content && !title) return;
     navigator.clipboard.writeText(`${title ? title + '\n\n' : ''}${content}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -190,7 +204,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
     }
   };
 
-  // 4K A4 Paper Image Export Handler (Guaranteed zero font overlap & crisp rendering)
+  // 4K A4 Paper Image Export Handler (Guaranteed 0% Text Overlap & High Clarity)
   const handleDownloadImage = async () => {
     if (!exportRef.current) return;
     try {
@@ -368,30 +382,13 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
 
         {/* Writing Canvas & Paper Sheet */}
         <div className="p-4 sm:p-6 md:p-8 space-y-4">
-          {/* Paper Sheet Header Banner (Ensures Heading & Date are ALWAYS clearly visible inside the paper card) */}
-          <div className="border-b border-[var(--hairline)] pb-4 mb-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 className="font-['Space_Grotesk'] text-xl sm:text-2xl font-black tracking-tight text-[var(--ink)]">
-                  Daily Journal
-                </h3>
-                <p className="text-xs font-bold text-[var(--text-muted)] mt-0.5">
-                  {formattedDateString} • 90-Day Transformation Plan
-                </p>
-              </div>
-              <span className="rounded-full bg-[#ff4d8b]/15 px-3 py-1 text-xs font-mono font-extrabold text-[#ff4d8b] border border-[#ff4d8b]/30">
-                Day {dayNumOfPlan} of 90
-              </span>
-            </div>
-          </div>
-
-          {/* Optional Title Input */}
+          {/* Prominent Journal Headline / Title Input */}
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Headline or Title for today's reflection (optional)..."
-            className="w-full bg-transparent font-['Space_Grotesk'] text-lg sm:text-xl font-extrabold text-[var(--ink)] placeholder-[var(--text-muted)] focus:outline-none border-b border-[var(--hairline)] pb-2"
+            placeholder="Headline or Title for today's reflection..."
+            className="w-full bg-transparent font-['Space_Grotesk'] text-xl sm:text-2xl md:text-3xl font-black text-[var(--ink)] placeholder-[var(--text-muted)] focus:outline-none border-b border-[var(--hairline)] pb-3"
           />
 
           {/* Lined / Blank Free-Form Writer Canvas */}
@@ -434,7 +431,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopy}
-              disabled={!content}
+              disabled={!content && !title}
               className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1.5 text-[11px] font-bold text-[var(--ink)] active:scale-95 hover:bg-[var(--surface-card)] transition disabled:opacity-40"
               title="Copy journal entry"
             >
@@ -468,12 +465,14 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
             {/* Header Block with Explicit Inline Pixel Spacing & Line Height */}
             <div style={{ marginBottom: '24px', paddingBottom: '16px', borderBottom: '2px solid rgba(125,125,125,0.2)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '10px' }}>
-                <h1 style={{ fontSize: '32px', fontWeight: 900, fontFamily: 'Space Grotesk, system-ui, sans-serif', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>
-                  DAILY JOURNAL
-                </h1>
-                <span style={{ backgroundColor: '#ff4d8b', color: '#ffffff', borderRadius: '9999px', padding: '4px 14px', fontSize: '11px', fontFamily: 'monospace', fontWeight: 800, whiteSpace: 'nowrap' }}>
-                  Day {dayNumOfPlan} of 90
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <h1 style={{ fontSize: '32px', fontWeight: 900, fontFamily: 'Space Grotesk, system-ui, sans-serif', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>
+                    DAILY JOURNAL
+                  </h1>
+                  <span style={{ backgroundColor: '#ff4d8b', color: '#ffffff', borderRadius: '9999px', padding: '4px 14px', fontSize: '11px', fontFamily: 'monospace', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                    Day {dayNumOfPlan} of 90
+                  </span>
+                </div>
               </div>
 
               <p style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 14px 0', opacity: 0.75, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -504,12 +503,12 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
               </div>
             </div>
 
-            {/* Entry Title */}
-            {title && (
-              <h2 style={{ fontSize: '22px', fontWeight: 800, fontFamily: 'Space Grotesk, system-ui, sans-serif', margin: '0 0 20px 0', paddingBottom: '12px', borderBottom: '1px solid rgba(125,125,125,0.2)' }}>
+            {/* Entry Headline Title */}
+            {title ? (
+              <h2 style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'Space Grotesk, system-ui, sans-serif', margin: '0 0 20px 0', paddingBottom: '12px', borderBottom: '1px solid rgba(125,125,125,0.2)' }}>
                 {title}
               </h2>
-            )}
+            ) : null}
 
             {/* Lined / Blank Paper Content */}
             <div
