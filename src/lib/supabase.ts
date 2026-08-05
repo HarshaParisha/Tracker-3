@@ -111,7 +111,7 @@ export async function syncJournalEntryToSupabase(entry: JournalEntry): Promise<v
     const creds = getSupabaseCredentials();
     if (!creds.url || !creds.key) return;
     const client = getSupabaseClient();
-    await client.from('journal_entries').upsert({
+    const payload = {
       date: entry.date,
       title: entry.title || '',
       content: entry.content || entry.free || '',
@@ -122,7 +122,22 @@ export async function syncJournalEntryToSupabase(entry: JournalEntry): Promise<v
       tomorrow: entry.tomorrow || '',
       free: entry.free || entry.content || '',
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'date' });
+    };
+
+    const { error } = await client.from('journal_entries').upsert(payload, { onConflict: 'date' });
+    if (error) {
+      // Fallback for Supabase schemas without custom title/content columns
+      await client.from('journal_entries').upsert({
+        date: entry.date,
+        free: entry.free || entry.content || '',
+        wins: entry.wins || '',
+        mistakes: entry.mistakes || '',
+        lessons: entry.lessons || '',
+        gratitude: entry.gratitude || '',
+        tomorrow: entry.tomorrow || '',
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'date' });
+    }
   } catch {
     // Silent background fallback
   }

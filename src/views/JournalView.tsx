@@ -56,10 +56,14 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
   useEffect(() => {
     if (journalEntry) {
       setTitle(journalEntry.title || '');
-      if (journalEntry.content !== undefined) {
-        setContent(journalEntry.content || '');
-      } else if (journalEntry.free !== undefined) {
-        setContent(journalEntry.free || '');
+      const mainText = (journalEntry.content && journalEntry.content.trim())
+        ? journalEntry.content
+        : (journalEntry.free && journalEntry.free.trim())
+          ? journalEntry.free
+          : '';
+
+      if (mainText) {
+        setContent(mainText);
       } else {
         // Build legacy text fallback if opening an old multi-field entry
         const parts = [];
@@ -68,8 +72,11 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
         if (journalEntry.lessons) parts.push(`### Core Lessons\n${journalEntry.lessons}`);
         if (journalEntry.gratitude) parts.push(`### Daily Gratitude\n${journalEntry.gratitude}`);
         if (journalEntry.tomorrow) parts.push(`### Tomorrow's Focus\n${journalEntry.tomorrow}`);
-        if (journalEntry.free) parts.push(`### Notes & Reflections\n${journalEntry.free}`);
-        setContent(parts.join('\n\n'));
+        if (parts.length > 0) {
+          setContent(parts.join('\n\n'));
+        } else {
+          setContent('');
+        }
       }
     } else {
       setTitle('');
