@@ -57,11 +57,13 @@ export const ProgressView: React.FC<ProgressViewProps> = ({ isDark = true }) => 
     const count = record?.routineDone?.length || 0;
 
 
-    let intensity = isDark ? 'bg-[#182d2d] border-[#223838] text-white/50' : 'bg-[#faf5e8] border-[#e5e5e5] text-[#6a6a6a]';
-    if (count >= 15) intensity = 'bg-[#1a3a3a] border-[#1a3a3a] text-white font-bold';
-    else if (count >= 10) intensity = 'bg-[#ff4d8b] border-[#ff4d8b] text-white font-bold';
-    else if (count >= 5) intensity = 'bg-[#ffb084] border-[#ffb084] text-[#0a0a0a] font-bold';
-    else if (count >= 1) intensity = 'bg-[#b8a4ed] border-[#b8a4ed] text-[#0a0a0a] font-bold';
+    let intensity = isDark
+      ? 'bg-[#181820] border-[#272732] text-zinc-500 hover:border-zinc-400/40'
+      : 'bg-[#f4efdf] border-[#e2dccb] text-zinc-400 hover:border-zinc-400/60';
+    if (count >= 15) intensity = 'bg-[#10b981] border-[#10b981] text-[#022c22] font-black shadow-xs';
+    else if (count >= 10) intensity = 'bg-[#ff4d8b] border-[#ff4d8b] text-white font-bold shadow-xs';
+    else if (count >= 5) intensity = 'bg-[#ffb084] border-[#ffb084] text-[#0a0a0a] font-bold shadow-xs';
+    else if (count >= 1) intensity = 'bg-[#b8a4ed] border-[#b8a4ed] text-[#0a0a0a] font-bold shadow-xs';
 
     heatmapCells.push({
       dayNum: i + 1,
@@ -161,11 +163,11 @@ export const ProgressView: React.FC<ProgressViewProps> = ({ isDark = true }) => 
           <div className="mt-4 flex items-center justify-between text-xs text-[var(--text-muted)] border-t border-[var(--hairline)] pt-3">
             <span className="font-mono text-[11px] font-bold">LOW INTENSITY</span>
             <div className="flex items-center gap-1.5 font-mono text-[10px]">
-              <span className="h-3 w-3 rounded bg-[var(--surface-soft)] border border-[var(--hairline)]"></span>
-              <span className="h-3 w-3 rounded bg-[#b8a4ed] border border-[#b8a4ed]"></span>
-              <span className="h-3 w-3 rounded bg-[#ffb084] border border-[#ffb084]"></span>
-              <span className="h-3 w-3 rounded bg-[#ff4d8b] border border-[#ff4d8b]"></span>
-              <span className="h-3 w-3 rounded bg-[#1a3a3a] border border-[#1a3a3a]"></span>
+              <span className={`h-3 w-3 rounded border ${isDark ? 'bg-[#181820] border-[#272732]' : 'bg-[#f4efdf] border-[#e2dccb]'}`} title="0 tasks executed"></span>
+              <span className="h-3 w-3 rounded bg-[#b8a4ed] border border-[#b8a4ed]" title="1-4 tasks executed"></span>
+              <span className="h-3 w-3 rounded bg-[#ffb084] border border-[#ffb084]" title="5-9 tasks executed"></span>
+              <span className="h-3 w-3 rounded bg-[#ff4d8b] border border-[#ff4d8b]" title="10-14 tasks executed"></span>
+              <span className="h-3 w-3 rounded bg-[#10b981] border border-[#10b981]" title="15+ tasks executed"></span>
             </div>
             <span className="font-mono text-[11px] font-bold">HIGH INTENSITY</span>
           </div>
