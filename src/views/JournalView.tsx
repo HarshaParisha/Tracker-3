@@ -204,7 +204,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
     }
   };
 
-  // 4K A4 Paper Image Export Handler (Guaranteed 0% Text Overlap & High Clarity)
+  // 4K A4 Paper Image Export Handler (Bulletproof Mobile WebKit & Desktop rendering)
   const handleDownloadImage = async () => {
     if (!exportRef.current) return;
     try {
@@ -212,11 +212,13 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
       if (typeof document !== 'undefined' && document.fonts) {
         await document.fonts.ready;
       }
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 350));
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
 
       const dataUrl = await toPng(exportRef.current, {
         quality: 1.0,
-        pixelRatio: 3, // 3x pixel scale for crystal clear 4K paper image clarity!
+        pixelRatio: isMobile ? 2 : 3, // Optimal scale for iOS Retina and Desktop 4K output
         cacheBust: true,
       });
 
@@ -452,7 +454,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
         </div>
       </div>
 
-      {/* Pristine 4K A4 Paper Target Node for Image Generation (100% Match with Reference Image 2) */}
+      {/* Off-screen Pristine 4K A4 Paper Target Node for Image Generation (Table-based Layout for 100% WebKit Mobile & Desktop Compatibility) */}
       <div
         style={{
           position: 'fixed',
@@ -470,7 +472,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
             width: '850px',
             minHeight: '1180px',
             padding: '48px 48px 40px 48px',
-            fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
             boxSizing: 'border-box',
           }}
           className={`flex flex-col justify-between ${
@@ -478,103 +480,99 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
           }`}
         >
           <div>
-            {/* Header Block with Zero Overlap Guarantee */}
-            <div
+            {/* Table Header Container: Prevents iOS Safari SVG ForeignObject CSS Gap bugs */}
+            <table
               style={{
-                marginBottom: '24px',
+                width: '100%',
+                borderCollapse: 'collapse',
+                marginBottom: '20px',
                 paddingBottom: '16px',
                 borderBottom: '2px solid rgba(125,125,125,0.25)',
               }}
             >
-              {/* Row 1: Left Title & Badge, Right Day Pills */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  width: '100%',
-                  marginBottom: '8px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <h1
-                    style={{
-                      fontSize: '28px',
-                      fontWeight: 900,
-                      fontFamily: 'Space Grotesk, Inter, system-ui, sans-serif',
-                      letterSpacing: '-0.02em',
-                      margin: 0,
-                      lineHeight: '1',
-                      whiteSpace: 'nowrap',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    DAILY JOURNAL
-                  </h1>
-                  <span
-                    style={{
-                      backgroundColor: '#ff4d8b',
-                      color: '#ffffff',
-                      borderRadius: '9999px',
-                      padding: '4px 14px',
-                      fontSize: '11px',
-                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                      fontWeight: 800,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Day {dayNumOfPlan} of 90
-                  </span>
-                </div>
-
-                {/* Day Chips */}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                  }}
-                >
-                  {DAYS_OF_WEEK.map((dayLabel, idx) => {
-                    const isSelected = idx === dayIndexMonStart;
-                    return (
-                      <div
-                        key={dayLabel}
+              <tbody>
+                <tr>
+                  <td style={{ verticalAlign: 'middle', textAlign: 'left', padding: '0 0 12px 0' }}>
+                    <div style={{ display: 'block', marginBottom: '6px' }}>
+                      <h1
                         style={{
-                          padding: '3px 8px',
-                          borderRadius: '6px',
-                          border: isSelected ? '1px solid #ff4d8b' : '1px solid currentColor',
-                          backgroundColor: isSelected ? '#ff4d8b' : 'transparent',
-                          color: isSelected ? '#ffffff' : 'inherit',
-                          opacity: isSelected ? 1 : 0.4,
+                          display: 'inline-block',
+                          verticalAlign: 'middle',
+                          fontSize: '26px',
+                          fontWeight: 900,
+                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                          letterSpacing: '-0.02em',
+                          margin: 0,
+                          padding: 0,
+                          lineHeight: '1.1',
+                          textTransform: 'uppercase',
+                          whiteSpace: 'nowrap',
                         }}
                       >
-                        {dayLabel}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                        DAILY JOURNAL
+                      </h1>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          verticalAlign: 'middle',
+                          marginLeft: '12px',
+                          backgroundColor: '#ff4d8b',
+                          color: '#ffffff',
+                          borderRadius: '9999px',
+                          padding: '4px 12px',
+                          fontSize: '11px',
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                          fontWeight: 800,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Day {dayNumOfPlan} of 90
+                      </span>
+                    </div>
 
-              {/* Row 2: Date Subtitle across full width */}
-              <p
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  margin: 0,
-                  opacity: 0.65,
-                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  lineHeight: '1.2',
-                }}
-              >
-                {formattedDateString} • 90-DAY TRANSFORMATION PLAN
-              </p>
-            </div>
+                    <div
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        opacity: 0.65,
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.06em',
+                        lineHeight: '1.2',
+                        marginTop: '4px',
+                      }}
+                    >
+                      {formattedDateString} • 90-DAY TRANSFORMATION PLAN
+                    </div>
+                  </td>
+
+                  <td style={{ verticalAlign: 'top', textAlign: 'right', whiteSpace: 'nowrap', padding: '0 0 12px 0' }}>
+                    <div style={{ display: 'inline-block', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', fontSize: '10px', fontWeight: 800 }}>
+                      {DAYS_OF_WEEK.map((dayLabel, idx) => {
+                        const isSelected = idx === dayIndexMonStart;
+                        return (
+                          <span
+                            key={dayLabel}
+                            style={{
+                              display: 'inline-block',
+                              marginLeft: idx === 0 ? '0px' : '4px',
+                              padding: '3px 7px',
+                              borderRadius: '6px',
+                              border: isSelected ? '1px solid #ff4d8b' : '1px solid currentColor',
+                              backgroundColor: isSelected ? '#ff4d8b' : 'transparent',
+                              color: isSelected ? '#ffffff' : 'inherit',
+                              opacity: isSelected ? 1 : 0.4,
+                            }}
+                          >
+                            {dayLabel}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
             {/* Entry Headline Title */}
             {title ? (
@@ -582,7 +580,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                 style={{
                   fontSize: '22px',
                   fontWeight: 800,
-                  fontFamily: 'Space Grotesk, Inter, system-ui, sans-serif',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
                   margin: '0 0 20px 0',
                   paddingBottom: '12px',
                   borderBottom: '1px solid rgba(125,125,125,0.2)',
@@ -602,11 +600,11 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                         ? 'repeating-linear-gradient(transparent, transparent 31px, rgba(255, 255, 255, 0.08) 31px, rgba(255, 255, 255, 0.08) 32px)'
                         : 'repeating-linear-gradient(transparent, transparent 31px, rgba(0, 0, 0, 0.08) 31px, rgba(0, 0, 0, 0.08) 32px)',
                       lineHeight: '32px',
-                      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
                     }
                   : {
                       lineHeight: '30px',
-                      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
                     }
               }
               className="min-h-[750px] text-base font-normal whitespace-pre-wrap leading-relaxed px-2 py-1"
