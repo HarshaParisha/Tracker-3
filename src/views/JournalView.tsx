@@ -1,176 +1,378 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/database';
-import { Card } from '@/components/common/Card';
-import { getTodayKey } from '@/utils/constants';
+import { db, type JournalEntry } from '@/db/database';
+import { getTodayKey, getStartDate } from '@/utils/constants';
 import { syncJournalEntryToSupabase } from '@/lib/supabase';
-import { Trophy, AlertTriangle, Lightbulb, Heart, Target, FileText, Save } from 'lucide-react';
-
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Save,
+  Copy,
+  Check,
+  RotateCcw,
+  BookOpen,
+  CheckCircle2,
+} from 'lucide-react';
 
 interface JournalViewProps {
   isDark?: boolean;
 }
 
-export const JournalView: React.FC<JournalViewProps> = () => {
+const DAYS_OF_WEEK = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
   const todayKey = getTodayKey();
-  const journalEntry = useLiveQuery(() => db.journalEntries.get(todayKey), [todayKey]);
+  const [selectedDate, setSelectedDate] = useState<string>(todayKey);
+  const [paperStyle, setPaperStyle] = useState<'lined' | 'blank'>(() => {
+    return (localStorage.getItem('tracker_journal_paper_style') as 'lined' | 'blank') || 'lined';
+  });
 
-  const [wins, setWins] = useState('');
-  const [mistakes, setMistakes] = useState('');
-  const [lessons, setLessons] = useState('');
-  const [gratitude, setGratitude] = useState('');
-  const [tomorrow, setTomorrow] = useState('');
-  const [free, setFree] = useState('');
-  const [savedMessage, setSavedMessage] = useState(false);
+  const journalEntry = useLiveQuery(
+    () => db.journalEntries.get(selectedDate),
+    [selectedDate]
+  );
 
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [copied, setCopied] = useState(false);
+
+  const isInitialMount = useRef(true);
+
+  // Synchronize state when selectedDate changes or database entry loads
   useEffect(() => {
     if (journalEntry) {
-      setWins(journalEntry.wins || '');
-      setMistakes(journalEntry.mistakes || '');
-      setLessons(journalEntry.lessons || '');
-      setGratitude(journalEntry.gratitude || '');
-      setTomorrow(journalEntry.tomorrow || '');
-      setFree(journalEntry.free || '');
+      setTitle(journalEntry.title || '');
+      if (journalEntry.content !== undefined) {
+        setContent(journalEntry.content || '');
+      } else if (journalEntry.free !== undefined) {
+        setContent(journalEntry.free || '');
+      } else {
+        // Build legacy text fallback if opening an old multi-field entry
+        const parts = [];
+        if (journalEntry.wins) parts.push(`### Accomplishments & Wins\n${journalEntry.wins}`);
+        if (journalEntry.mistakes) parts.push(`### Friction & Improvement\n${journalEntry.mistakes}`);
+        if (journalEntry.lessons) parts.push(`### Core Lessons\n${journalEntry.lessons}`);
+        if (journalEntry.gratitude) parts.push(`### Daily Gratitude\n${journalEntry.gratitude}`);
+        if (journalEntry.tomorrow) parts.push(`### Tomorrow's Focus\n${journalEntry.tomorrow}`);
+        if (journalEntry.free) parts.push(`### Notes & Reflections\n${journalEntry.free}`);
+        setContent(parts.join('\n\n'));
+      }
+    } else {
+      setTitle('');
+      setContent('');
     }
-  }, [journalEntry]);
+    setSaveStatus('idle');
+  }, [selectedDate, journalEntry]);
 
-  const handleSave = async () => {
-    const entry = {
-      date: todayKey,
-      wins,
-      mistakes,
-      lessons,
-      gratitude,
-      tomorrow,
-      free,
-    };
-    await db.journalEntries.put(entry);
-    syncJournalEntryToSupabase(entry);
+  // Handle Save to Dexie & Supabase
+  const handleSave = useCallback(
+    async (newTitle = title, newContent = content) => {
+      setSaveStatus('saving');
+      const entry: JournalEntry = {
+        date: selectedDate,
+        title: newTitle,
+        content: newContent,
+        free: newContent, // Dual-write for backward compatibility
+      };
+      await db.journalEntries.put(entry);
+      syncJournalEntryToSupabase(entry);
 
-    setSavedMessage(true);
-    setTimeout(() => setSavedMessage(false), 2000);
+      setTimeout(() => {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2500);
+      }, 300);
+    },
+    [selectedDate, title, content]
+  );
+
+  // Auto-save debounce on content or title change (after initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      handleSave(title, content);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [title, content]);
+
+  // Date Navigation Helpers
+  const handlePrevDay = () => {
+    const d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(d.toISOString().slice(0, 10));
   };
 
+  const handleNextDay = () => {
+    const d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    setSelectedDate(d.toISOString().slice(0, 10));
+  };
+
+  const handleToday = () => {
+    setSelectedDate(todayKey);
+  };
+
+  // Day of week calculation for selected date
+  const selectedDateObj = new Date(selectedDate + 'T00:00:00');
+  const dayOfWeekNum = selectedDateObj.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  // Map to MON=0 ... SUN=6 index
+  const dayIndexMonStart = dayOfWeekNum === 0 ? 6 : dayOfWeekNum - 1;
+
+  const handleSelectDayOfWeek = (monIndex: number) => {
+    const currentMonIndex = dayIndexMonStart;
+    const diffDays = monIndex - currentMonIndex;
+    const newDate = new Date(selectedDateObj);
+    newDate.setDate(newDate.getDate() + diffDays);
+    setSelectedDate(newDate.toISOString().slice(0, 10));
+  };
+
+  // 90-Day Plan Day Number calculation
+  const startDateStr = getStartDate();
+  const startMs = new Date(startDateStr + 'T00:00:00').getTime();
+  const currentMs = selectedDateObj.getTime();
+  const dayNumOfPlan = Math.max(1, Math.floor((currentMs - startMs) / 86400000) + 1);
+
+  // Formatted date string (e.g. Wednesday, August 5, 2026)
+  const formattedDateString = selectedDateObj.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  // Writing statistics
+  const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+  const charCount = content.length;
+  const readTimeMin = Math.max(1, Math.ceil(wordCount / 200));
+
+  const handleCopy = () => {
+    if (!content) return;
+    navigator.clipboard.writeText(`${title ? title + '\n\n' : ''}${content}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleToggleStyle = () => {
+    const nextStyle = paperStyle === 'lined' ? 'blank' : 'lined';
+    setPaperStyle(nextStyle);
+    localStorage.setItem('tracker_journal_paper_style', nextStyle);
+  };
+
+  const handleClear = () => {
+    if (!content && !title) return;
+    if (window.confirm('Are you sure you want to clear this entry?')) {
+      setTitle('');
+      setContent('');
+      handleSave('', '');
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-5xl mx-auto pb-10">
+      {/* Top Header & Date Navigation Bar */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-['Space_Grotesk'] text-3xl font-extrabold tracking-tight text-[var(--ink)]">Daily Journal & Reflection</h2>
-          <p className="text-sm font-semibold text-[var(--text-muted)]">09:00 – 09:30 PM • Daily Synthesis, Lessons Learned & Tomorrow Planning</p>
+          <div className="flex items-center gap-3">
+            <h2 className="font-['Space_Grotesk'] text-3xl font-extrabold tracking-tight text-[var(--ink)]">
+              Daily Journal
+            </h2>
+            <span className="rounded-full bg-[#ff4d8b]/15 px-3 py-1 text-xs font-mono font-bold text-[#ff4d8b] border border-[#ff4d8b]/30">
+              Day {dayNumOfPlan} of 90
+            </span>
+          </div>
+          <p className="mt-1 text-xs font-semibold text-[var(--text-muted)]">
+            {formattedDateString} • Writer's Minimal Reflection Space
+          </p>
         </div>
-        <button
-          onClick={handleSave}
-          className="flex items-center gap-2 rounded-full bg-[#ff4d8b] px-5 py-2.5 text-xs font-bold text-white hover:opacity-90 transition shadow-sm"
-        >
-          <Save className="h-4 w-4 text-white" />
-          <span>{savedMessage ? 'Journal Saved ✓' : 'Save Journal Entry'}</span>
-        </button>
+
+        {/* Date Controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Day Navigation */}
+          <div className="flex items-center rounded-xl border border-[var(--hairline)] bg-[var(--surface-soft)] p-1">
+            <button
+              onClick={handlePrevDay}
+              title="Previous Day"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--ink)] hover:bg-[var(--surface-card)] transition"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            <div className="relative px-2 flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-[#ff4d8b]" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                className="bg-transparent font-mono text-xs font-bold text-[var(--ink)] focus:outline-none cursor-pointer"
+              />
+            </div>
+
+            <button
+              onClick={handleNextDay}
+              title="Next Day"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--ink)] hover:bg-[var(--surface-card)] transition"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Today Shortcut */}
+          <button
+            onClick={handleToday}
+            className={`rounded-xl px-3 py-2 text-xs font-bold font-mono transition border ${
+              selectedDate === todayKey
+                ? 'bg-[#ff4d8b] text-white border-[#ff4d8b]'
+                : 'bg-[var(--surface-soft)] text-[var(--ink)] border-[var(--hairline)] hover:bg-[var(--surface-card)]'
+            }`}
+          >
+            Today
+          </button>
+
+          {/* Manual Save Button */}
+          <button
+            onClick={() => handleSave()}
+            className="flex items-center gap-2 rounded-xl bg-[#ff4d8b] px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition shadow-sm"
+          >
+            {saveStatus === 'saving' ? (
+              <RotateCcw className="h-3.5 w-3.5 animate-spin text-white" />
+            ) : saveStatus === 'saved' ? (
+              <Check className="h-3.5 w-3.5 text-white" />
+            ) : (
+              <Save className="h-3.5 w-3.5 text-white" />
+            )}
+            <span>{saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved ✓' : 'Save Entry'}</span>
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Wins */}
-        <Card title="Today's Accomplishments & Wins" color="cream">
-          <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#a4d4c5] text-[#0a0a0a] shrink-0 mt-1">
-              <Trophy className="h-4 w-4" />
-            </div>
-            <textarea
-              value={wins}
-              onChange={(e) => setWins(e.target.value)}
-              onBlur={handleSave}
-              rows={4}
-              placeholder="What went exceptionally well today?"
-              className="w-full rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
-            />
+      {/* Aesthetic Dairy Main Notebook Card */}
+      <div className="rounded-3xl border border-[var(--hairline)] bg-[var(--surface-card)] shadow-lg overflow-hidden transition-all">
+        {/* Notebook Top Bar (Inspired by physical diary layout) */}
+        <div className="border-b border-[var(--hairline)] bg-[var(--surface-soft)] px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Day of Week Selector Bar (MON TUE WED THU FRI SAT SUN) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+            <span className="text-[10px] font-mono font-bold text-[var(--text-muted)] mr-1 uppercase tracking-wider">
+              DAY:
+            </span>
+            {DAYS_OF_WEEK.map((dayLabel, idx) => {
+              const isSelected = idx === dayIndexMonStart;
+              return (
+                <button
+                  key={dayLabel}
+                  onClick={() => handleSelectDayOfWeek(idx)}
+                  className={`flex flex-col items-center justify-center rounded-xl px-2.5 py-1 text-[10px] font-mono font-extrabold transition-all ${
+                    isSelected
+                      ? 'bg-[#ff4d8b] text-white shadow-xs scale-105'
+                      : 'bg-[var(--canvas)] text-[var(--text-muted)] hover:text-[var(--ink)] border border-[var(--hairline)]'
+                  }`}
+                >
+                  <span>{dayLabel}</span>
+                  <span
+                    className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
+                      isSelected ? 'bg-white' : 'bg-transparent'
+                    }`}
+                  ></span>
+                </button>
+              );
+            })}
           </div>
-        </Card>
 
-        {/* Mistakes & Friction Points */}
-        <Card title="Areas of Friction & Improvement" color="cream">
-          <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#ff4d8b] text-white shrink-0 mt-1">
-              <AlertTriangle className="h-4 w-4" />
-            </div>
-            <textarea
-              value={mistakes}
-              onChange={(e) => setMistakes(e.target.value)}
-              onBlur={handleSave}
-              rows={4}
-              placeholder="What friction occurred or what could have been handled better?"
-              className="w-full rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
-            />
-          </div>
-        </Card>
+          {/* Right Top Bar Options */}
+          <div className="flex items-center gap-3 text-xs">
+            {/* Lined Paper vs Blank Toggle */}
+            <button
+              onClick={handleToggleStyle}
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1.5 text-[11px] font-bold text-[var(--ink)] hover:bg-[var(--surface-card)] transition"
+              title="Toggle Notebook Lined Paper style"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-[#ff4d8b]" />
+              <span>{paperStyle === 'lined' ? 'Lined Paper' : 'Blank Canvas'}</span>
+            </button>
 
-        {/* Lessons Learned */}
-        <Card title="Core Lessons Synthesized" color="cream">
-          <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e8b94a] text-[#0a0a0a] shrink-0 mt-1">
-              <Lightbulb className="h-4 w-4" />
-            </div>
-            <textarea
-              value={lessons}
-              onChange={(e) => setLessons(e.target.value)}
-              onBlur={handleSave}
-              rows={4}
-              placeholder="Key insights & takeaways to integrate moving forward..."
-              className="w-full rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
-            />
+            {/* Save Status Indicator */}
+            {saveStatus === 'saved' && (
+              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-500">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Auto-saved
+              </span>
+            )}
           </div>
-        </Card>
+        </div>
 
-        {/* Gratitude */}
-        <Card title="Daily Gratitude" color="cream">
-          <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#ffb084] text-[#0a0a0a] shrink-0 mt-1">
-              <Heart className="h-4 w-4" />
-            </div>
-            <textarea
-              value={gratitude}
-              onChange={(e) => setGratitude(e.target.value)}
-              onBlur={handleSave}
-              rows={4}
-              placeholder="What people, experiences, or opportunities are you grateful for today?"
-              className="w-full rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
-            />
-          </div>
-        </Card>
+        {/* Writing Canvas */}
+        <div className="p-6 md:p-8 space-y-4">
+          {/* Optional Title Input */}
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Headline or Title for today's reflection..."
+            className="w-full bg-transparent font-['Space_Grotesk'] text-xl md:text-2xl font-extrabold text-[var(--ink)] placeholder-[var(--text-muted)] focus:outline-none border-b border-[var(--hairline)] pb-3"
+          />
 
-        {/* Tomorrow's Focus */}
-        <Card title="Tomorrow's Primary Focus" color="cream">
-          <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--ink)] text-[var(--canvas)] shrink-0 mt-1">
-              <Target className="h-4 w-4" />
-            </div>
+          {/* Lined / Blank Free-Form Writer Canvas */}
+          <div className="relative">
             <textarea
-              value={tomorrow}
-              onChange={(e) => setTomorrow(e.target.value)}
-              onBlur={handleSave}
-              rows={4}
-              placeholder="Highest priority objectives & single deep-work task for tomorrow..."
-              className="w-full rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Write your thoughts, daily learnings, ideas, accomplishments, or reflections freely here..."
+              style={
+                paperStyle === 'lined'
+                  ? {
+                      backgroundImage: isDark
+                        ? 'repeating-linear-gradient(transparent, transparent 31px, rgba(255, 255, 255, 0.06) 31px, rgba(255, 255, 255, 0.06) 32px)'
+                        : 'repeating-linear-gradient(transparent, transparent 31px, rgba(0, 0, 0, 0.06) 31px, rgba(0, 0, 0, 0.06) 32px)',
+                      lineHeight: '32px',
+                    }
+                  : { lineHeight: '28px' }
+              }
+              className="min-h-[460px] w-full resize-y bg-transparent p-2 text-sm md:text-base font-normal text-[var(--ink)] placeholder-[var(--text-muted)] focus:outline-none transition-all"
             />
           </div>
-        </Card>
+        </div>
 
-        {/* Free Writing */}
-        <Card title="Free Reflection & Notes" color="cream">
-          <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#b8a4ed] text-[#0a0a0a] shrink-0 mt-1">
-              <FileText className="h-4 w-4" />
-            </div>
-            <textarea
-              value={free}
-              onChange={(e) => setFree(e.target.value)}
-              onBlur={handleSave}
-              rows={4}
-              placeholder="Additional reflections, ideas, or unstructured notes..."
-              className="w-full rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3 text-xs text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
-            />
+        {/* Notebook Footer Toolbar & Metrics */}
+        <div className="border-t border-[var(--hairline)] bg-[var(--surface-soft)] px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-muted)] font-mono">
+          {/* Metrics */}
+          <div className="flex items-center gap-4">
+            <span>
+              <strong className="text-[var(--ink)] font-extrabold">{wordCount}</strong> words
+            </span>
+            <span>
+              <strong className="text-[var(--ink)] font-extrabold">{charCount}</strong> chars
+            </span>
+            <span>
+              ~<strong className="text-[var(--ink)] font-extrabold">{readTimeMin}</strong> min read
+            </span>
           </div>
-        </Card>
+
+          {/* Utility Actions */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopy}
+              disabled={!content}
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1 text-[11px] font-bold text-[var(--ink)] hover:bg-[var(--surface-card)] transition disabled:opacity-40"
+              title="Copy journal entry"
+            >
+              {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3 text-[var(--text-muted)]" />}
+              <span>{copied ? 'Copied!' : 'Copy'}</span>
+            </button>
+
+            <button
+              onClick={handleClear}
+              disabled={!content && !title}
+              className="flex items-center gap-1.5 rounded-lg border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1 text-[11px] font-bold text-rose-500 hover:bg-rose-500/10 transition disabled:opacity-40"
+              title="Clear entry"
+            >
+              <RotateCcw className="h-3 w-3 text-rose-500" />
+              <span>Clear</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

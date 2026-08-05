@@ -34,12 +34,14 @@ export interface LearningRecord {
 
 export interface JournalEntry {
   date: string; // Key: YYYY-MM-DD
-  wins: string;
-  mistakes: string;
-  lessons: string;
-  gratitude: string;
-  tomorrow: string;
-  free: string;
+  title?: string;
+  content?: string;
+  wins?: string;
+  mistakes?: string;
+  lessons?: string;
+  gratitude?: string;
+  tomorrow?: string;
+  free?: string;
 }
 
 export interface JobApplication {

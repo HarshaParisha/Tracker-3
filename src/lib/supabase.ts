@@ -113,12 +113,14 @@ export async function syncJournalEntryToSupabase(entry: JournalEntry): Promise<v
     const client = getSupabaseClient();
     await client.from('journal_entries').upsert({
       date: entry.date,
-      wins: entry.wins,
-      mistakes: entry.mistakes,
-      lessons: entry.lessons,
-      gratitude: entry.gratitude,
-      tomorrow: entry.tomorrow,
-      free: entry.free,
+      title: entry.title || '',
+      content: entry.content || entry.free || '',
+      wins: entry.wins || '',
+      mistakes: entry.mistakes || '',
+      lessons: entry.lessons || '',
+      gratitude: entry.gratitude || '',
+      tomorrow: entry.tomorrow || '',
+      free: entry.free || entry.content || '',
       updated_at: new Date().toISOString(),
     }, { onConflict: 'date' });
   } catch {
