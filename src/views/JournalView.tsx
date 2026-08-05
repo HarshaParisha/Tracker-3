@@ -204,7 +204,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
     }
   };
 
-  // 4K A4 Paper Image Export Handler (Bulletproof Mobile WebKit & Desktop rendering)
+  // 4K A4 Paper Image Export Handler (Preserves 100% exact Tracker App Fonts: Space Grotesk & Inter)
   const handleDownloadImage = async () => {
     if (!exportRef.current) return;
     try {
@@ -212,13 +212,13 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
       if (typeof document !== 'undefined' && document.fonts) {
         await document.fonts.ready;
       }
-      await new Promise((resolve) => setTimeout(resolve, 350));
+      await new Promise((resolve) => setTimeout(resolve, 400));
 
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
 
       const dataUrl = await toPng(exportRef.current, {
         quality: 1.0,
-        pixelRatio: isMobile ? 2 : 3, // Optimal scale for iOS Retina and Desktop 4K output
+        pixelRatio: isMobile ? 2 : 3,
         cacheBust: true,
       });
 
@@ -454,7 +454,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
         </div>
       </div>
 
-      {/* Off-screen Pristine 4K A4 Paper Target Node for Image Generation (Table-based Layout for 100% WebKit Mobile & Desktop Compatibility) */}
+      {/* Pristine 4K A4 Paper Target Node for Image Generation (100% Exact Tracker App Fonts: Space Grotesk & Inter) */}
       <div
         style={{
           position: 'fixed',
@@ -472,13 +472,21 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
             width: '850px',
             minHeight: '1180px',
             padding: '48px 48px 40px 48px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
             boxSizing: 'border-box',
           }}
           className={`flex flex-col justify-between ${
             isDark ? 'bg-[#121218] text-[#f4f4f5]' : 'bg-[#fffaf0] text-[#0a0a0a]'
           }`}
         >
+          {/* Inline Font CSS Embedding for html-to-image canvas capture */}
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700;800;900&display=swap');
+            .t-space { font-family: 'Space Grotesk', 'Inter', sans-serif !important; }
+            .t-inter { font-family: 'Inter', -apple-system, sans-serif !important; }
+            .t-mono { font-family: 'Fredoka', ui-monospace, SFMono-Regular, monospace !important; }
+          `}</style>
+
           <div>
             {/* Table Header Container: Prevents iOS Safari SVG ForeignObject CSS Gap bugs */}
             <table
@@ -495,12 +503,12 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                   <td style={{ verticalAlign: 'middle', textAlign: 'left', padding: '0 0 12px 0' }}>
                     <div style={{ display: 'block', marginBottom: '6px' }}>
                       <h1
+                        className="t-space"
                         style={{
                           display: 'inline-block',
                           verticalAlign: 'middle',
-                          fontSize: '26px',
+                          fontSize: '28px',
                           fontWeight: 900,
-                          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
                           letterSpacing: '-0.02em',
                           margin: 0,
                           padding: 0,
@@ -512,6 +520,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                         DAILY JOURNAL
                       </h1>
                       <span
+                        className="t-mono"
                         style={{
                           display: 'inline-block',
                           verticalAlign: 'middle',
@@ -521,7 +530,6 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                           borderRadius: '9999px',
                           padding: '4px 12px',
                           fontSize: '11px',
-                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
                           fontWeight: 800,
                           whiteSpace: 'nowrap',
                         }}
@@ -531,11 +539,11 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                     </div>
 
                     <div
+                      className="t-mono"
                       style={{
                         fontSize: '11px',
                         fontWeight: 800,
                         opacity: 0.65,
-                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
                         textTransform: 'uppercase',
                         letterSpacing: '0.06em',
                         lineHeight: '1.2',
@@ -547,7 +555,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                   </td>
 
                   <td style={{ verticalAlign: 'top', textAlign: 'right', whiteSpace: 'nowrap', padding: '0 0 12px 0' }}>
-                    <div style={{ display: 'inline-block', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', fontSize: '10px', fontWeight: 800 }}>
+                    <div className="t-mono" style={{ display: 'inline-block', fontSize: '10px', fontWeight: 800 }}>
                       {DAYS_OF_WEEK.map((dayLabel, idx) => {
                         const isSelected = idx === dayIndexMonStart;
                         return (
@@ -574,25 +582,27 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
               </tbody>
             </table>
 
-            {/* Entry Headline Title */}
+            {/* Entry Headline Title (Explicit Space Grotesk Font matching Tracker App) */}
             {title ? (
               <h2
+                className="t-space"
                 style={{
                   fontSize: '22px',
-                  fontWeight: 800,
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                  fontWeight: 900,
                   margin: '0 0 20px 0',
                   paddingBottom: '12px',
                   borderBottom: '1px solid rgba(125,125,125,0.2)',
                   lineHeight: '1.3',
+                  letterSpacing: '-0.01em',
                 }}
               >
                 {title}
               </h2>
             ) : null}
 
-            {/* Lined / Blank Paper Content */}
+            {/* Lined / Blank Paper Content (Explicit Inter Font matching Tracker App) */}
             <div
+              className="t-inter min-h-[750px] text-base font-normal whitespace-pre-wrap leading-relaxed px-2 py-1"
               style={
                 paperStyle === 'lined'
                   ? {
@@ -600,14 +610,11 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
                         ? 'repeating-linear-gradient(transparent, transparent 31px, rgba(255, 255, 255, 0.08) 31px, rgba(255, 255, 255, 0.08) 32px)'
                         : 'repeating-linear-gradient(transparent, transparent 31px, rgba(0, 0, 0, 0.08) 31px, rgba(0, 0, 0, 0.08) 32px)',
                       lineHeight: '32px',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
                     }
                   : {
                       lineHeight: '30px',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
                     }
               }
-              className="min-h-[750px] text-base font-normal whitespace-pre-wrap leading-relaxed px-2 py-1"
             >
               {content || 'No journal entry recorded for this day.'}
             </div>
@@ -615,6 +622,7 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
 
           {/* Footer Watermark */}
           <div
+            className="t-mono"
             style={{
               marginTop: '48px',
               paddingTop: '16px',
@@ -622,7 +630,6 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
               fontSize: '11px',
               opacity: 0.7,
             }}
