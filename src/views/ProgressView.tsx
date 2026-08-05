@@ -24,16 +24,19 @@ export const ProgressView: React.FC<ProgressViewProps> = ({ isDark = true }) => 
   const allDailyRecords = useLiveQuery(() => db.dailyRecords.toArray(), []);
   const allJobs = useLiveQuery(() => db.jobApplications.toArray(), []);
 
-  const totalDaysTracked = allDailyRecords?.length || 0;
-  const avgWater = allDailyRecords?.length
-    ? Math.round(allDailyRecords.reduce((sum, r) => sum + (r.water || 0), 0) / allDailyRecords.length)
+  const startDateStr = getStartDate();
+  const validDailyRecords = allDailyRecords?.filter((r) => r.date >= startDateStr) || [];
+
+  const totalDaysTracked = validDailyRecords.length;
+  const avgWater = validDailyRecords.length
+    ? Math.round(validDailyRecords.reduce((sum, r) => sum + (r.water || 0), 0) / validDailyRecords.length)
     : 0;
 
   // Best streak
   let bestStreak = 0;
   let currentStreak = 0;
-  if (allDailyRecords) {
-    const sorted = [...allDailyRecords].sort((a, b) => a.date.localeCompare(b.date));
+  if (validDailyRecords.length > 0) {
+    const sorted = [...validDailyRecords].sort((a, b) => a.date.localeCompare(b.date));
     for (const r of sorted) {
       if (r.routineDone && r.routineDone.length >= 5) {
         currentStreak++;
@@ -46,12 +49,11 @@ export const ProgressView: React.FC<ProgressViewProps> = ({ isDark = true }) => 
 
   // Generate 90-day matrix cells
   const heatmapCells = [];
-  const startDateStr = getStartDate();
   for (let i = 0; i < 90; i++) {
     const d = new Date(startDateStr);
     d.setDate(d.getDate() + i);
     const dateStr = d.toISOString().slice(0, 10);
-    const record = allDailyRecords?.find((r) => r.date === dateStr);
+    const record = validDailyRecords.find((r) => r.date === dateStr);
     const count = record?.routineDone?.length || 0;
 
 
@@ -81,7 +83,8 @@ export const ProgressView: React.FC<ProgressViewProps> = ({ isDark = true }) => 
 
         targetDate.setDate(targetDate.getDate() + startDay + w * 7 + d);
         const dateStr = targetDate.toISOString().slice(0, 10);
-        const record = allDailyRecords?.find((r) => r.date === dateStr);
+        if (dateStr < startDateStr) continue;
+        const record = validDailyRecords.find((r) => r.date === dateStr);
         if (record) {
           sumTasks += record.routineDone?.length || 0;
           dayCount++;

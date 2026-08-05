@@ -6,6 +6,7 @@ import { Card } from '@/components/common/Card';
 import {
   getTodayKey,
   getDayNumber,
+  getStartDate,
   getRoutine,
   WATER_DAILY_GOAL,
   type RoutineBlock,
@@ -51,8 +52,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ isDark = true }) =
 
   // Streak calculation
   let streak = 0;
+  const startDateStr = getStartDate();
   if (allDailyRecords) {
-    const sorted = [...allDailyRecords].sort((a, b) => b.date.localeCompare(a.date));
+    const validDailyRecords = allDailyRecords.filter((r) => r.date >= startDateStr);
+    const sorted = [...validDailyRecords].sort((a, b) => b.date.localeCompare(a.date));
     for (const r of sorted) {
       if (r.routineDone && r.routineDone.length >= 5) {
         streak++;
@@ -69,7 +72,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ isDark = true }) =
     const d = new Date();
     d.setDate(d.getDate() - i);
     const k = d.toISOString().slice(0, 10);
-    const rec = allDailyRecords?.find((r) => r.date === k);
+    const isBeforeStart = k < startDateStr;
+    const rec = isBeforeStart ? undefined : allDailyRecords?.find((r) => r.date === k);
     chartData.push({
       day: dayNames[d.getDay()],
       water: rec?.water || 0,

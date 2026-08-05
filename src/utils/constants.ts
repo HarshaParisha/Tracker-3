@@ -3,7 +3,7 @@ export const WATER_DAILY_GOAL = 3000; // 3 Liters
 export function getStartDate(): string {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('tracker_start_date');
-    if (saved && saved !== "2026-08-02") return saved;
+    if (saved && saved >= "2026-08-05") return saved;
   }
   return "2026-08-05"; // Default Day 1: August 5, 2026 (Exact 3-Month Plan to November 5, 2026)
 }
