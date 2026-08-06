@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
 import { Card } from '@/components/common/Card';
@@ -9,6 +9,7 @@ import {
   WEEK1_MEALS,
   WEEK2_MEALS,
 } from '@/utils/constants';
+import { syncDailyRecordToSupabase, pullSupabaseToLocal } from '@/lib/supabase';
 import { AlertOctagon, CheckSquare, Square } from 'lucide-react';
 
 interface NutritionViewProps {
@@ -19,6 +20,14 @@ export const NutritionView: React.FC<NutritionViewProps> = () => {
   const todayKey = getTodayKey();
   const dayNumber = getDayNumber();
   const dayOfWeek = getDayOfWeek(); // 0=Sun, 1=Mon, ..., 6=Sat
+
+  // Auto pull from Supabase on view mount & window focus
+  useEffect(() => {
+    pullSupabaseToLocal();
+    const handleFocus = () => pullSupabaseToLocal();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const weekNum = Math.ceil(dayNumber / 7);
   const isWeek1Rotation = weekNum % 2 === 1;
@@ -45,7 +54,7 @@ export const NutritionView: React.FC<NutritionViewProps> = () => {
       [mealKey]: !mealsDone[mealKey],
     };
 
-    await db.dailyRecords.put({
+    const newRecord = {
       date: todayKey,
       water: current?.water || 0,
       creatine: current?.creatine || 0,
@@ -54,7 +63,10 @@ export const NutritionView: React.FC<NutritionViewProps> = () => {
       routineDone: current?.routineDone || [],
       mealsDone: updatedMealsDone,
       groceryChecked: current?.groceryChecked || [],
-    });
+    };
+
+    await db.dailyRecords.put(newRecord);
+    syncDailyRecordToSupabase(newRecord);
   };
 
   const avoidFoods = [

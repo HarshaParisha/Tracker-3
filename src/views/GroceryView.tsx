@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
 import { Card } from '@/components/common/Card';
 import { DEFAULT_GROCERY, getTodayKey } from '@/utils/constants';
+import { syncDailyRecordToSupabase, pullSupabaseToLocal } from '@/lib/supabase';
 import { Plus, Trash2, CheckSquare, Square } from 'lucide-react';
 
 interface GroceryViewProps {
@@ -13,6 +14,14 @@ export const GroceryView: React.FC<GroceryViewProps> = () => {
   const todayKey = getTodayKey();
   const dailyRecord = useLiveQuery(() => db.dailyRecords.get(todayKey), [todayKey]);
   const customItems = useLiveQuery(() => db.customGroceryItems.toArray(), []);
+
+  // Auto pull from Supabase on view mount & window focus
+  useEffect(() => {
+    pullSupabaseToLocal();
+    const handleFocus = () => pullSupabaseToLocal();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const checkedKeys = dailyRecord?.groceryChecked || [];
   const [customInput, setCustomInput] = useState('');
@@ -26,7 +35,7 @@ export const GroceryView: React.FC<GroceryViewProps> = () => {
       ? [...existing, key]
       : existing.filter((k) => k !== key);
 
-    await db.dailyRecords.put({
+    const newRecord = {
       date: todayKey,
       water: current?.water || 0,
       creatine: current?.creatine || 0,
@@ -35,7 +44,10 @@ export const GroceryView: React.FC<GroceryViewProps> = () => {
       routineDone: current?.routineDone || [],
       mealsDone: current?.mealsDone || { breakfast: false, lunch: false, dinner: false, snack: false },
       groceryChecked: updated,
-    });
+    };
+
+    await db.dailyRecords.put(newRecord);
+    syncDailyRecordToSupabase(newRecord);
   };
 
   const handleAddCustom = async (e: React.FormEvent) => {
