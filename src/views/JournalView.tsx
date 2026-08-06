@@ -63,8 +63,12 @@ export const JournalView: React.FC<JournalViewProps> = ({ isDark = true }) => {
           : '';
 
       if (rawTitle) {
+        let cleanContent = rawContent;
+        if (cleanContent.startsWith(rawTitle)) {
+          cleanContent = cleanContent.slice(rawTitle.length).trim();
+        }
         setTitle(rawTitle);
-        setContent(rawContent);
+        setContent(cleanContent);
       } else if (rawContent) {
         // Automatically extract first line as headline if title wasn't saved separately
         const lines = rawContent.split('\n');
