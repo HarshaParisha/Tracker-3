@@ -16,6 +16,10 @@ export function setStartDate(dateStr: string): void {
 
 export function getTodayKey(): string {
   const d = new Date();
+  // Cutoff at 2:00 AM: hours 0 and 1 belong to yesterday's tracking session
+  if (d.getHours() < 2) {
+    d.setDate(d.getDate() - 1);
+  }
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -24,14 +28,18 @@ export function getTodayKey(): string {
 
 export function getDayNumber(): number {
   const startDateStr = getStartDate();
-  const start = new Date(startDateStr).getTime();
-  const now = new Date(getTodayKey()).getTime();
+  const start = new Date(startDateStr + 'T00:00:00').getTime();
+  const now = new Date(getTodayKey() + 'T00:00:00').getTime();
   const diffDays = Math.floor((now - start) / 86400000) + 1;
   return Math.max(1, diffDays);
 }
 
 export function getDayOfWeek(): number {
-  return new Date().getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const d = new Date();
+  if (d.getHours() < 2) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
 }
 
 export function isWeekendDay(): boolean {

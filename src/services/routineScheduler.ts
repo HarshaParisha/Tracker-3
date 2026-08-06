@@ -1,4 +1,5 @@
 import { notificationService } from '@/services/notificationService';
+import { getTodayKey } from '@/utils/constants';
 
 export interface ScheduledReminder {
   time: string; // HH:MM (24h format)
@@ -329,7 +330,7 @@ function checkScheduledReminders(): void {
   const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const currentDayOfWeek = now.getDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
   const currentDayOfMonth = now.getDate(); // 1 - 31
-  const todayKey = now.toISOString().slice(0, 10);
+  const todayKey = getTodayKey();
 
   ROUTINE_REMINDERS.forEach((reminder) => {
     if (reminder.time !== currentHHMM) return;
