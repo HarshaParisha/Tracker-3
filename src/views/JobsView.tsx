@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type JobApplication } from '@/db/database';
 import { Card } from '@/components/common/Card';
 import { getTodayKey } from '@/utils/constants';
-import { syncJobApplicationToSupabase, deleteJobApplicationFromSupabase } from '@/lib/supabase';
-import { Plus, Trash2, Filter } from 'lucide-react';
-
+import { syncJobApplicationToSupabase, deleteJobApplicationFromSupabase, pullSupabaseToLocal } from '@/lib/supabase';
+import { Plus, Trash2, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface JobsViewProps {
   isDark?: boolean;
 }
 
+const ITEMS_PER_PAGE = 6;
+
 export const JobsView: React.FC<JobsViewProps> = () => {
   const todayKey = getTodayKey();
   const allApplications = useLiveQuery(() => db.jobApplications.toArray(), []);
+
+  // Auto pull from Supabase on view mount & window focus
+  useEffect(() => {
+    pullSupabaseToLocal();
+    const handleFocus = () => pullSupabaseToLocal();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const [company, setCompany] = useState('');
   const [role, setRole] = useState('');
@@ -21,6 +30,7 @@ export const JobsView: React.FC<JobsViewProps> = () => {
   const [date, setDate] = useState(todayKey);
   const [notes, setNotes] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const handleAddApplication = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +51,7 @@ export const JobsView: React.FC<JobsViewProps> = () => {
     setCompany('');
     setRole('');
     setNotes('');
+    setCurrentPage(1); // Jump to first page to see the newly logged application
   };
 
   const handleDelete = async (id: string) => {
@@ -54,11 +65,25 @@ export const JobsView: React.FC<JobsViewProps> = () => {
     if (updated) syncJobApplicationToSupabase(updated);
   };
 
+  // Sort applications Newest to Oldest (New to Old)
+  const sortedApps = (allApplications || []).slice().sort((a, b) => {
+    if (b.date !== a.date) {
+      return b.date.localeCompare(a.date);
+    }
+    return b.id.localeCompare(a.id);
+  });
 
-  const filteredApps = allApplications?.filter((app) => {
+  // Filter by status
+  const filteredApps = sortedApps.filter((app) => {
     if (filterStatus === 'all') return true;
     return app.status === filterStatus;
   });
+
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(filteredApps.length / ITEMS_PER_PAGE));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedApps = filteredApps.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const getStatusBadge = (s: JobApplication['status']) => {
     const badgeStyles: Record<JobApplication['status'], string> = {
@@ -164,7 +189,7 @@ export const JobsView: React.FC<JobsViewProps> = () => {
         </form>
       </Card>
 
-      {/* Applications Table */}
+      {/* Applications Table Card with 6-line Newest-to-Oldest Pagination */}
       <Card
         title="Application History Pipeline"
         color="cream"
@@ -173,7 +198,10 @@ export const JobsView: React.FC<JobsViewProps> = () => {
             <Filter className="h-3.5 w-3.5 text-[var(--text-muted)]" />
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setCurrentPage(1);
+              }}
               className="rounded-full border border-[var(--hairline)] bg-[var(--canvas)] px-3 py-1 text-xs font-semibold text-[var(--ink)] focus:outline-none"
             >
               <option value="all">All Statuses</option>
@@ -193,7 +221,7 @@ export const JobsView: React.FC<JobsViewProps> = () => {
       >
         {/* 1. Mobile Cards Layout (Strictly visible on screens < 640px) */}
         <div className="space-y-3 sm:hidden">
-          {filteredApps?.map((app) => (
+          {paginatedApps.map((app) => (
             <div key={app.id} className="rounded-xl border border-[var(--hairline)] bg-[var(--canvas)] p-3.5 space-y-2.5 shadow-sm">
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -238,7 +266,7 @@ export const JobsView: React.FC<JobsViewProps> = () => {
               </div>
             </div>
           ))}
-          {filteredApps?.length === 0 && (
+          {filteredApps.length === 0 && (
             <p className="py-8 text-center text-xs font-medium text-[var(--text-muted)]">No application records found.</p>
           )}
         </div>
@@ -257,7 +285,7 @@ export const JobsView: React.FC<JobsViewProps> = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--hairline)]">
-              {filteredApps?.map((app) => (
+              {paginatedApps.map((app) => (
                 <tr key={app.id} className="hover:bg-[var(--surface-soft)] transition">
                   <td className="py-3 font-mono text-[11px] font-bold text-[var(--text-muted)] whitespace-nowrap pr-4">{app.date}</td>
                   <td className="py-3 font-extrabold text-[var(--ink)] whitespace-nowrap pr-4">{app.company}</td>
@@ -285,6 +313,7 @@ export const JobsView: React.FC<JobsViewProps> = () => {
                     <button
                       onClick={() => handleDelete(app.id)}
                       className="text-[var(--text-muted)] hover:text-[#ff4d8b] transition p-1"
+                      title="Delete application"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -293,10 +322,55 @@ export const JobsView: React.FC<JobsViewProps> = () => {
               ))}
             </tbody>
           </table>
-          {filteredApps?.length === 0 && (
+          {filteredApps.length === 0 && (
             <p className="py-8 text-center text-xs font-medium text-[var(--text-muted)]">No application records found.</p>
           )}
         </div>
+
+        {/* 3. Responsive 6-Line Pagination Bar */}
+        {filteredApps.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-[var(--hairline)] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="font-mono text-[11px] font-bold text-[var(--text-muted)]">
+              Showing <span className="text-[var(--ink)] font-extrabold">{startIndex + 1}</span>–
+              <span className="text-[var(--ink)] font-extrabold">{Math.min(startIndex + ITEMS_PER_PAGE, filteredApps.length)}</span> of{' '}
+              <span className="text-[var(--ink)] font-extrabold">{filteredApps.length}</span> applications
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1 sm:pb-0 scrollbar-none">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={validCurrentPage === 1}
+                className="flex items-center gap-1 rounded-xl border border-[var(--hairline)] bg-[var(--surface-soft)] px-3 py-1.5 text-xs font-bold text-[var(--ink)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-card)] active:scale-95 transition"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span>Prev</span>
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`h-8 w-8 rounded-xl text-xs font-mono font-bold transition active:scale-95 flex items-center justify-center shrink-0 ${
+                    validCurrentPage === pageNum
+                      ? 'bg-[#ff4d8b] text-white shadow-xs font-extrabold scale-105'
+                      : 'border border-[var(--hairline)] bg-[var(--surface-soft)] text-[var(--ink)] hover:bg-[var(--surface-card)]'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={validCurrentPage === totalPages}
+                className="flex items-center gap-1 rounded-xl border border-[var(--hairline)] bg-[var(--surface-soft)] px-3 py-1.5 text-xs font-bold text-[var(--ink)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-card)] active:scale-95 transition"
+              >
+                <span>Next</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
