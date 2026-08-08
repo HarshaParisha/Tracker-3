@@ -48,7 +48,10 @@ export function isWeekendDay(): boolean {
 }
 
 export function getRoutine(): RoutineBlock[] {
-  return isWeekendDay() ? WEEKEND_ROUTINE : WEEKDAY_ROUTINE;
+  const dow = getDayOfWeek();
+  if (dow === 6) return SATURDAY_ROUTINE;
+  if (dow === 0) return SUNDAY_ROUTINE;
+  return WEEKDAY_ROUTINE;
 }
 
 export interface RoutineBlock {
@@ -83,7 +86,25 @@ export const WEEKDAY_ROUTINE: RoutineBlock[] = [
   { id: 21, time: "10:00 PM", title: "Sleep Target", tasks: "Sleep by 10:00 PM · 7 Hours continuous rest" },
 ];
 
-export const WEEKEND_ROUTINE: RoutineBlock[] = [
+export const SATURDAY_ROUTINE: RoutineBlock[] = [
+  { id: 0, time: "05:00 AM", title: "Wake Up", tasks: "Alarm ringing · Immediate wake up · 1 Glass water · Freshen up" },
+  { id: 1, time: "05:30 – 06:30 AM", title: "Morning Fitness", tasks: "Walk · Jog · Run · Stretch · Outdoor sunrise review" },
+  { id: 2, time: "06:30 – 09:00 AM", title: "Morning Routine", tasks: "Breakfast · Quality family time · Mental relaxation" },
+  { id: 3, time: "09:00 – 10:00 AM", title: "Workspace & Weekly Planning", tasks: "Organize living space & desk · Laptop maintenance · Goal review" },
+  { id: 4, time: "10:00 – 11:00 AM", title: "DSA & Python Consolidation", tasks: "Revise week's concepts · Review notes · Re-solve previous problems" },
+  { id: 5, time: "11:00 AM – 12:30 PM", title: "Elective Learning", tasks: "Technical talks · Product case studies · Soft skills & articles" },
+  { id: 6, time: "12:30 – 01:30 PM", title: "Lunch & Family Time", tasks: "Lunch · Family time · Relaxation" },
+  { id: 7, time: "01:30 – 04:30 PM", title: "Personal Recovery Block", tasks: "Reading · Documentaries · Photography · Cafe visit · Rest" },
+  { id: 8, time: "04:30 – 06:00 PM", title: "Field Exploration & Networking", tasks: "Tech meetups · Coworking spaces · Industry networking · Field notes" },
+  { id: 9, time: "06:00 – 06:30 PM", title: "Temple & Reflection", tasks: "Hanuman Chalisa · Meditation · Quiet reflection" },
+  { id: 10, time: "07:00 – 08:00 PM", title: "Dinner & Family Time", tasks: "Nutritious dinner · Family interaction" },
+  { id: 11, time: "08:00 – 09:30 PM", title: "Evening Relaxation", tasks: "Conversations · Gaming · Reading · Journaling" },
+  { id: 12, time: "09:30 – 10:00 PM", title: "Saturday Journaling", tasks: "Experiences · Network contacts · Learnings · Gratitude" },
+  { id: 13, time: "10:00 – 10:30 PM", title: "Sunday Preparation", tasks: "Prepare Sunday schedule · Relaxation prep · Digital shutdown" },
+  { id: 14, time: "10:30 PM", title: "Sleep Target", tasks: "Sleep by 10:30 PM · Wake at 05:00 AM Sunday" },
+];
+
+export const SUNDAY_ROUTINE: RoutineBlock[] = [
   { id: 0, time: "05:00 AM", title: "Wake Up", tasks: "Alarm ringing · Immediate wake up · 1 Glass water · Freshen up" },
   { id: 1, time: "05:30 – 06:30 AM", title: "Morning Fitness", tasks: "Walk · Jog · Run · Stretch · Outdoor sunrise review" },
   { id: 2, time: "06:30 – 09:00 AM", title: "Morning Routine", tasks: "Breakfast · Quality family time · Mental relaxation" },
@@ -100,6 +121,8 @@ export const WEEKEND_ROUTINE: RoutineBlock[] = [
   { id: 13, time: "10:00 – 10:30 PM", title: "Monday Preparation", tasks: "Prepare workspace & attire · Digital shutdown" },
   { id: 14, time: "10:30 PM", title: "Sleep Target", tasks: "Sleep by 10:30 PM · Wake at 05:00 AM Monday" },
 ];
+
+export const WEEKEND_ROUTINE: RoutineBlock[] = SATURDAY_ROUTINE;
 
 export const WEEK1_MEALS = {
   breakfast: [
